@@ -58,6 +58,8 @@ public sealed class DockGroup
 
 public sealed class UsageSettings
 {
+    public List<string> NativeProviders { get; set; } = ["codex", "claude", "cursor"];
+    public bool CompanionFallback { get; set; }
     public bool Enabled { get; set; } = true;
     public bool AutoHideOnShortDisplay { get; set; } = true;
     public int RefreshIntervalSeconds { get; set; } = 90;

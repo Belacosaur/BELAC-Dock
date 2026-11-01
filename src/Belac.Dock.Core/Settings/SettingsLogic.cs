@@ -55,6 +55,8 @@ public static class SettingsNormalizer
         settings.Usage ??= new UsageSettings();
         settings.Usage.ProviderOrder ??= [];
         settings.Usage.HiddenProviderIds ??= [];
+        settings.Usage.NativeProviders ??= [];
+        settings.Usage.NativeProviders = settings.Usage.NativeProviders.Where(id => id is "codex" or "claude" or "cursor").Distinct().ToList();
         foreach (var app in settings.Apps)
             app.MatchRules ??= [];
 

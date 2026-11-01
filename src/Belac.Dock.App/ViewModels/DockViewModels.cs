@@ -93,7 +93,7 @@ public partial class UsageRailViewModel : ObservableObject
     [ObservableProperty] private bool hasData;
     [ObservableProperty] private bool isStale;
     [ObservableProperty] private bool isCollapsed;
-    [ObservableProperty] private string message = "Checking local usage…";
+    [ObservableProperty] private string message = "Checking AI usage…";
     [ObservableProperty] private string updatedText = "";
 
     public void Apply(UsageSnapshot snapshot, UsageSettings settings)
@@ -114,8 +114,8 @@ public partial class UsageRailViewModel : ObservableObject
             HasData = false;
             Providers.Clear();
             Message = snapshot.SourceError is null
-                ? "No providers are enabled in OpenTokenUsage."
-                : snapshot.SourceError + " The dock still launches apps. Start OpenTokenUsage, then retry.";
+                ? "Connect your AI accounts to see usage."
+                : snapshot.SourceError + " Open Connect AI usage to check your accounts.";
             return;
         }
 
@@ -198,6 +198,8 @@ public partial class UsageRailViewModel : ObservableObject
             yield return "Fetched " + fetched.ToLocalTime().ToString("g");
         if (provider.IsStale)
             yield return "This reading is stale.";
+        if (!string.IsNullOrWhiteSpace(provider.Error))
+            yield return provider.Error;
     }
 
     private static string BuildTooltip(ProviderUsage provider, UsageSettings settings)
@@ -342,7 +344,7 @@ public partial class DockViewModel : ObservableObject
     private void RefreshUsage() => _ = _host.UsagePoll.RefreshAsync(CancellationToken.None);
 
     [RelayCommand]
-    private void OpenUsageApp() => _host.OpenUsageApp();
+    private void OpenUsageApp() => _host.ConnectUsage();
 
     [RelayCommand]
     private void ConnectUsage() => _host.ConnectUsage();

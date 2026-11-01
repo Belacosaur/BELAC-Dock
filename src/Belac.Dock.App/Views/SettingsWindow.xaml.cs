@@ -236,7 +236,7 @@ public partial class SettingsWindow : Window
         _loading = false;
     }
 
-    private void OpenUsage_Click(object sender, RoutedEventArgs e) => _host.OpenUsageApp();
+    private void OpenUsage_Click(object sender, RoutedEventArgs e) => _host.ConnectUsage(this);
 
     private async void RefreshUsage_Click(object sender, RoutedEventArgs e)
     {

@@ -17,29 +17,32 @@
   <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
    <StackPanel>
     <StackPanel x:Name="InstallStep">
-     <TextBlock Text="1. Get the companion app" FontSize="19" FontWeight="SemiBold"/>
-     <TextBlock Style="{StaticResource BodyText}" Margin="0,12,0,18" Text="OpenTokenUsage connects to your AI accounts and reads their usage. BELAC Dock displays those readings. You only need to set up the companion once."/>
+     <TextBlock Text="1. Choose your AI providers" FontSize="19" FontWeight="SemiBold"/>
+     <TextBlock Style="{StaticResource BodyText}" Margin="0,12,0,18" Text="Connect directly using the accounts you already use on this PC. No companion app is required."/>
      <Border Style="{StaticResource WorkspaceCard}" Padding="16"><StackPanel>
-      <TextBlock x:Name="InstallStatus" Text="Checking your computer…" TextWrapping="Wrap"/>
-      <WrapPanel Margin="0,12,0,0">
-       <Button Style="{StaticResource TextButton}" Content="Download OpenTokenUsage" Click="Download_Click"/>
-       <Button Style="{StaticResource TextButton}" Content="Open OpenTokenUsage" Click="Open_Click"/>
-      </WrapPanel>
+      <CheckBox x:Name="CodexBox" Content="Codex — ChatGPT account" Margin="0,6"/>
+      <CheckBox x:Name="ClaudeBox" Content="Claude — Claude Code account" Margin="0,6"/>
+      <CheckBox x:Name="CursorBox" Content="Cursor — desktop account" Margin="0,6"/>
      </StackPanel></Border>
-     <TextBlock Style="{StaticResource BodyText}" Margin="0,16,0,0" Text="Download the Windows x64 setup file from the official release page, run it, then open OpenTokenUsage. Already installed? Choose Open OpenTokenUsage or find it in Windows Start."/>
-     <TextBlock Style="{StaticResource MutedText}" Margin="0,12,0,0" Text="Downloads open in your browser. Nothing is installed automatically. The dock works without AI usage too."/>
+     <TextBlock Style="{StaticResource MutedText}" Margin="0,16,0,0" Text="The dock reads existing sign-ins and sends each token only to its provider. Tokens are never copied into dock settings or logs. Your apps keep control of sign-in and session renewal."/>
+     <Expander Header="Other providers / optional fallback" Margin="0,20,0,0"><StackPanel Margin="0,12,0,0">
+      <CheckBox x:Name="FallbackBox" Content="Also read OpenTokenUsage when it is running"/>
+      <TextBlock Style="{StaticResource MutedText}" Margin="0,8,0,0" Text="Optional support for other providers. Native readings take priority; this option requires the companion only for fallback readings."/>
+      <Button Style="{StaticResource TextButton}" Content="Open optional companion" Click="Open_Click" HorizontalAlignment="Left"/>
+     </StackPanel></Expander>
+     <Button Style="{StaticResource TextButton}" Content="Save choices without connecting" Click="SaveChoices_Click" HorizontalAlignment="Left" Margin="0,12,0,0"/>
     </StackPanel>
     <StackPanel x:Name="AccountsStep" Visibility="Collapsed">
-     <TextBlock Text="2. Connect your providers" FontSize="19" FontWeight="SemiBold"/>
-     <TextBlock Style="{StaticResource BodyText}" Margin="0,12,0,0" Text="In OpenTokenUsage, enable the providers you use. Follow each provider's setup or sign-in guidance, then refresh its panel until you see usage readings."/>
-     <TextBlock Style="{StaticResource BodyText}" Margin="0,14,0,0" Text="Already signed into a coding app? Some providers can use that existing sign-in. Others need additional setup. Signing into a website alone may not be enough."/>
-     <Button Style="{StaticResource TextButton}" Content="Open OpenTokenUsage" HorizontalAlignment="Left" Margin="0,16,0,0" Click="Open_Click"/>
-     <TextBlock Style="{StaticResource FieldLabel}" Text="Help for your provider"/>
+     <TextBlock Text="2. Sign in once in your provider app" FontSize="19" FontWeight="SemiBold"/>
+     <TextBlock Style="{StaticResource BodyText}" Margin="0,12,0,0" Text="Already signed in on this Windows PC? Choose Next. The dock detects supported local sign-ins automatically, including after you restart it."/>
+     <TextBlock Style="{StaticResource BodyText}" Margin="0,16,0,0" Text="Codex: sign in with your ChatGPT account. File-based Codex sign-ins are supported. API keys, memory-only sessions and keyring-only sign-ins do not provide a supported local connection yet."/>
+     <TextBlock Style="{StaticResource BodyText}" Margin="0,12,0,0" Text="Claude: sign in to Claude Code on Windows. A claude.ai browser session alone will not connect. Cursor: sign in to the Cursor desktop app."/>
+     <TextBlock Style="{StaticResource FieldLabel}" Text="Need the provider app?"/>
      <ComboBox x:Name="ProviderHelp" SelectedIndex="0" AutomationProperties.Name="Provider setup help">
-      <ComboBoxItem Content="Codex" Tag="codex"/><ComboBoxItem Content="Claude" Tag="claude"/><ComboBoxItem Content="Cursor" Tag="cursor"/><ComboBoxItem Content="GitHub Copilot" Tag="copilot"/><ComboBoxItem Content="Other providers" Tag="all"/>
+      <ComboBoxItem Content="Codex" Tag="codex"/><ComboBoxItem Content="Claude" Tag="claude"/><ComboBoxItem Content="Cursor" Tag="cursor"/>
      </ComboBox>
-     <Button Style="{StaticResource TextButton}" Content="Open provider instructions" HorizontalAlignment="Left" Margin="0,8,0,0" Click="ProviderHelp_Click"/>
-     <TextBlock Style="{StaticResource MutedText}" Margin="0,16,0,0" Text="Complete sign-ins in the provider's app or browser. BELAC Dock never asks you to paste passwords, API keys or session tokens."/>
+     <Button Style="{StaticResource TextButton}" Content="Open official provider page" HorizontalAlignment="Left" Margin="0,8,0,0" Click="ProviderHelp_Click"/>
+     <TextBlock Style="{StaticResource MutedText}" Margin="0,16,0,0" Text="If a session expires, open that app to renew it and check again. No passwords or tokens to paste here. WSL-only accounts are not detected in this version."/>
     </StackPanel>
     <StackPanel x:Name="CheckStep" Visibility="Collapsed">
      <TextBlock Text="3. Check your connection" FontSize="19" FontWeight="SemiBold"/>
@@ -52,7 +55,7 @@
        <TextBlock Text="{Binding Detail}" Style="{StaticResource MutedText}" Margin="0,4,0,0"/>
       </StackPanel></Border>
      </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
-     <TextBlock Style="{StaticResource MutedText}" Text="Keep OpenTokenUsage running in the notification area beside the Windows clock. BELAC Dock will pick up its updates automatically."/>
+     <TextBlock Style="{StaticResource MutedText}" Text="The dock refreshes in the background: at most every two minutes for Codex and Cursor, and five minutes for Claude. Provider rate limits may delay refreshes."/>
     </StackPanel>
     <Button Style="{StaticResource TextButton}" Content="Read the step-by-step setup guide ↗" HorizontalAlignment="Left" Margin="0,20,0,0" Click="Guide_Click"/>
     <TextBlock x:Name="ActionError" Foreground="{DynamicResource Brush.Warn}" TextWrapping="Wrap" Margin="0,8,0,0" AutomationProperties.LiveSetting="Polite"/>

@@ -161,8 +161,8 @@
                     <TextBlock Style="{StaticResource FieldLabel}" Text="Refresh interval (seconds)"/>
                     <Slider x:Name="IntervalSlider" Minimum="30" Maximum="900" TickFrequency="30" IsSnapToTickEnabled="True" ValueChanged="IntervalChanged"/>
                     <TextBlock x:Name="IntervalLabel" Style="{StaticResource MutedText}"/>
-                    <TextBlock Style="{StaticResource MutedText}" Margin="0,8,0,0" Text="Connect your providers in OpenTokenUsage to see their latest readings here."/>
-                    <Button Style="{StaticResource TextButton}" Content="Open OpenTokenUsage" Margin="0,12,0,0" Click="OpenUsage_Click" AutomationProperties.Name="Open OpenTokenUsage"/>
+                    <TextBlock Style="{StaticResource MutedText}" Margin="0,8,0,0" Text="Connect Codex, Claude and Cursor directly using your existing Windows sign-ins."/>
+                    <Button Style="{StaticResource TextButton}" Content="Manage AI connections" Margin="0,12,0,0" Click="OpenUsage_Click" AutomationProperties.Name="Manage AI connections"/>
                     <Button Style="{StaticResource TextButton}" Content="Refresh now" Margin="0,8,0,0" Click="RefreshUsage_Click" AutomationProperties.Name="Refresh usage now"/>
                     <TextBlock Style="{StaticResource FieldLabel}" Text="Providers from the last reading"/>
                     <ListBox x:Name="ProviderList" Height="140" Background="{DynamicResource Brush.Surface}" Foreground="{DynamicResource Brush.Foreground}" DisplayMemberPath="Label"/>

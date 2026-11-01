@@ -23,6 +23,7 @@ internal static class Program
         var settings = DockSettings.CreateDefault();
         settings.OnboardingCompleted = true;
         settings.Usage.Enabled = false;
+        settings.Usage.NativeProviders = [];
         settings.YieldOnFullscreen = false;
         settings.Animation = false;
         settings.Apps.Add(new DockApp { DisplayName = "UI fixture", ExePath = Environment.ProcessPath!, GroupId = settings.Groups[0].Id });

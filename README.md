@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <strong><a href="https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.1.0/BELAC.Dock-v1.1.0-win-x64.zip">Download for Windows 11 x64</a></strong>
+  <strong><a href="https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.2.0/BELAC.Dock-v1.2.0-win-x64.zip">Download for Windows 11 x64</a></strong>
   · <a href="#quick-start">Quick start</a>
   · <a href="#screenshots">Screenshots</a>
   · <a href="https://github.com/Belacosaur/BELAC-Dock/releases/latest">Release notes</a>
@@ -20,7 +20,7 @@
 
 ## Quick start
 
-1. **[Download the Windows ZIP](https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.1.0/BELAC.Dock-v1.1.0-win-x64.zip)** and extract the entire folder.
+1. **[Download the Windows ZIP](https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.2.0/BELAC.Dock-v1.2.0-win-x64.zip)** and extract the entire folder.
 2. Run **BELAC.Dock.exe** and choose your apps.
 3. Drag the top handle to position your dock. Pick a colour in **Settings → Appearance**.
 
@@ -34,7 +34,7 @@ No installer or separate runtime is needed. The build is unsigned. Checksums are
 | **A small footprint** | A thin floating bar with drag-to-move, resizing and remembered geometry. |
 | **Your apps, one click away** | Launch, focus and minimize apps, or choose between their open windows. Add executables and shortcuts by dragging them onto the dock. |
 | **Your colours** | Mint, Ocean, Violet, Rose, Amber and Slate, applied live across the dock, menus and popouts. |
-| **AI usage at a glance** | Provider logos, usage rings and compact details from your local OpenTokenUsage service. |
+| **AI usage at a glance** | Native Codex, Claude and Cursor usage rings, with an optional companion fallback. |
 | **Optional taskbar control** | Choose Mirror or Dock-only per app, with saved preferences and recovery across restarts. |
 | **Windows preferences respected** | High contrast and reduced motion are honoured automatically. |
 
@@ -70,11 +70,11 @@ No installer or separate runtime is needed. The build is unsigned. Checksums are
 
 Open **Settings → Usage → Connect AI usage** for a three-step walkthrough:
 
-1. Install or open the free OpenTokenUsage companion.
-2. Enable your providers and complete their sign-ins in that app.
+1. Choose Codex, Claude and/or Cursor. No companion app is required.
+2. Sign in to the provider apps on Windows, or use your existing supported sign-ins.
 3. Check the connection and choose **Show readings on dock**.
 
-The wizard shows which providers supplied readings and what to do if the connection is unavailable. BELAC Dock never asks for your passwords or API keys. App launching works without the companion.
+The dock reads supported local sign-ins and fetches usage directly. Tokens stay out of dock settings and logs; each is sent only to its provider. If a session expires, open that provider app to renew it. OpenTokenUsage remains an optional fallback for other providers. See the guide for supported sign-in storage and plan limitations.
 
 **[Follow the beginner-friendly setup guide](USAGE_INTEGRATION.md)**
 

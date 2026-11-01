@@ -14,7 +14,8 @@ namespace Belac.Dock.App;
 public sealed class AppHost : IDisposable
 {
     private readonly RollingFileLoggerProvider _logs;
-    private readonly OpenTokenUsageSource _usageSource;
+    private readonly NativeUsageSource _usageSource;
+    public NativeUsageSource NativeUsage => _usageSource;
     private IntPtr _hotkeyWindow;
     private bool _closed;
 
@@ -36,7 +37,7 @@ public sealed class AppHost : IDisposable
         Startup = new StartupRegistration();
         Hotkeys = new HotkeyRegistrar();
         UsageApps = new OpenTokenUsageLocator();
-        _usageSource = new OpenTokenUsageSource();
+        _usageSource = new NativeUsageSource(() => Session.Current.Usage);
         UsagePoll = new UsagePollingCoordinator(_usageSource, () => Session.Current.Usage.RefreshIntervalSeconds);
         Instance = instance ?? new SingleInstanceManager();
         Separation.SetPaused(Session.Current.SeparationPaused);

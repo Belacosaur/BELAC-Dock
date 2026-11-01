@@ -1,76 +1,59 @@
 # Connect your AI usage
 
-BELAC Dock shows your AI usage at the bottom of the taskbar. A separate, free companion app called **OpenTokenUsage** connects to your providers and supplies the readings.
+BELAC Dock 1.2 connects directly to **Codex, Claude and Cursor**. You do not need OpenTokenUsage running or installed for these native connections.
 
-You do not need to write code, configure a server, or give BELAC Dock your passwords or API keys. Your app shortcuts work even if you skip AI setup.
+## Three steps
 
-## Start the guided setup
+1. Open **Settings → Usage → Connect AI usage**.
+2. Select your providers. Already signed in to their Windows apps? Choose **Next**. Otherwise sign in using the instructions below.
+3. Check the results and choose **Show readings on dock**. You can finish with one connected provider and add others later.
 
-Open **BELAC Dock → Settings → Usage → Connect AI usage**. You can also click the connect icon at the bottom of an empty usage rail, or choose the optional setup during your first launch.
+Your selection survives restarts. To disconnect providers, uncheck them and use **Save choices without connecting**. Turning off **Enable AI usage readings** stops background polling.
 
-The wizard has three steps. You can go back or select **Set up later** at any time.
+## Your provider
 
-## 1. Install and open OpenTokenUsage
+| Provider | What you need | What the dock reads |
+| --- | --- | --- |
+| Codex | A ChatGPT account signed into Codex on Windows, with file-based authentication | Session and weekly limits where supplied; code review limit where available |
+| Claude | A subscription account signed into **Claude Code** on Windows | Session, all-model weekly limits and available model-specific limits |
+| Cursor | Signed into the **Cursor desktop app** on Windows | Total, Auto and API usage percentages where supplied |
 
-1. In the wizard, select **Download OpenTokenUsage**. This opens its [official release page](https://github.com/PowerUserZ/OpenTokenUsage/releases/latest).
-2. Download the Windows **x64 setup executable** from the release assets, not the source-code ZIP.
-3. Run the setup file and open OpenTokenUsage. You choose whether to install it; BELAC Dock does not install anything automatically.
-4. Return to the wizard and select **Next**.
+Official starting points: [Codex](https://chatgpt.com/codex), [Claude](https://claude.ai/download), [Cursor](https://cursor.com/downloads). For Claude Code, follow the [official setup instructions](https://code.claude.com/docs/en/setup) and sign in inside Claude Code.
 
-Already have it? Select **Open OpenTokenUsage**, or search for it in the Windows Start menu. It may open in the notification area beside the clock; check the hidden-icons arrow too.
+A website login alone is not enough. There is no password, API key or token to paste into BELAC Dock.
 
-For people who prefer a terminal, the project's documented alternative is:
+### Supported local sign-ins
 
-```powershell
-winget install PowerUserZ.OpenTokenUsage
-```
+- Codex: `%USERPROFILE%\.codex\auth.json`, or the directory specified by `CODEX_HOME`. The legacy `.config\codex` directory is also checked. API-key-only, keyring-only and memory-only authentication are not supported yet. Do not weaken credential storage just to connect the dock; use the optional fallback if it supports your setup.
+- Claude Code: `%USERPROFILE%\.claude\.credentials.json`, or the directory specified by `CLAUDE_CONFIG_DIR`.
+- Cursor: `%APPDATA%\Cursor\User\globalStorage\state.vscdb`, opened read-only. Cursor can remain open.
+- WSL-only accounts, additional accounts and custom Cursor profiles are not detected in this version.
 
-## 2. Connect your providers in the companion
+The dock never modifies these files or rotates refresh tokens. If a session expires, open the provider app to renew the sign-in. The next check reads updated credentials automatically.
 
-Open OpenTokenUsage, enable the providers you use, and follow the setup or sign-in guidance shown for each one. Refresh its panel until you can see your usage there.
+## Refresh and status
 
-| Provider | Where to start |
-| :--- | :--- |
-| Codex | Make sure your Codex coding tool is signed into the intended account. Enable Codex in OpenTokenUsage and follow any missing-login guidance it shows. A ChatGPT website login alone may not be sufficient. |
-| Claude | Make sure the Claude coding tool/account you want to track is signed in. Enable Claude and follow the companion's setup guidance. Browser chat and coding-tool authentication are not necessarily interchangeable. |
-| Cursor | Sign into the account you use in Cursor, enable Cursor in OpenTokenUsage, and follow its provider-specific instructions if usage is unavailable. |
-| Copilot or another provider | Enable the provider in OpenTokenUsage and follow its instructions. Supported account types and setup steps vary. |
+The dock polls while it runs. Requests are limited to once every two minutes for Codex/Cursor and five minutes for Claude. Repeatedly clicking Refresh respects these intervals. Provider rate limits delay requests until the retry time.
 
-Use **Help for your provider** in the wizard for the upstream instructions, or visit the [supported-provider list](https://github.com/PowerUserZ/OpenTokenUsage#supported-providers).
+An unavailable provider does not stop others working. Previous readings are marked stale on failure. Missing limits are not displayed as zero. Changed accounts do not reuse the previous account's cached readings.
 
-Complete sign-ins in the appropriate app or browser. **Do not paste passwords, tokens, cookies or credential-file contents into BELAC Dock, an AI chat, or a public issue.** BELAC Dock has no credential-entry fields. OpenTokenUsage handles provider connections separately.
+| What you see | What to do |
+| --- | --- |
+| Sign in to the provider | Open its Windows app and sign in. Browser-only and WSL-only sessions are not detected. |
+| Sign-in expired or access denied | Open the provider app and renew sign-in. Some accounts may not have access to usage. |
+| Couldn't read sign-in | Let the app finish signing in, then retry. Use the same Windows user. |
+| Rate limit reached | Wait until the displayed retry time. Other monitors share your provider's limits. |
+| No supported usage limits | Check the provider dashboard. Some plans, including Cursor Enterprise/request-based plans, use unsupported payloads. |
+| Couldn't refresh | Check your internet connection. The dock retries automatically. |
 
-## 3. Check and show readings
+## Optional OpenTokenUsage fallback
 
-Return to the wizard and select **Next**. It checks the local connection and lists the provider readings it received.
+For other providers, expand **Other providers / optional fallback** and enable **Also read OpenTokenUsage when it is running**. Install it from its [official releases](https://github.com/PowerUserZ/OpenTokenUsage/releases/latest) if needed and connect the additional providers there.
 
-- **Readings received:** select **Show readings on dock**. This enables usage and makes those providers visible, including any you previously hid.
-- **Connected — waiting for readings:** the connection works, but there is no usable provider data yet. Finish setup and refresh in OpenTokenUsage, then choose **Check again**.
-- **No connection yet:** open OpenTokenUsage and leave it running. If it is already running, restart it, wait for its panel to load, and check again.
+Fallback is off by default and uses `http://127.0.0.1:6736/v1/usage`. Successful native readings take priority. Only fallback readings require the companion to remain running.
 
-You can finish with one provider and connect more later. A provider missing from the list has not supplied data to the dock yet; installing its app alone does not guarantee it will appear.
+## Privacy and implementation
 
-The check reads cached usage from OpenTokenUsage. It does not prove your provider login is still valid or request fresh quota data directly. Check the displayed update time; refresh in OpenTokenUsage if you need a newer reading.
+Access tokens are read locally and held in memory. Each token is sent only to its provider's fixed HTTPS endpoint, with redirects disabled. Tokens and raw responses are never saved to dock settings or logs. No analytics are collected.
 
-## Keep it working
-
-Keep OpenTokenUsage running in the tray while you use the dock. If you want both apps available after restarting Windows, enable their start-at-sign-in options separately. Closing the companion stops new readings; the dock can retain older readings marked stale.
-
-In **Settings → Usage**, you can hide or reorder providers and change how often BELAC Dock checks for updates. This changes the dock's polling interval, not the companion's provider-refresh schedule.
-
-## Common problems
-
-| What you see | What to try |
-| :--- | :--- |
-| Companion not detected, but you installed it | Open it from Windows Start. Detection can miss portable/custom installations; a working local connection can still be used. |
-| Provider missing or needs attention | Enable and refresh it in OpenTokenUsage. Resolve its account/sign-in error there first. |
-| Usage is visible in the companion but the dock cannot connect | Restart the companion. Its local API normally starts automatically; another program using port 6736 can prevent it from starting. See the [upstream local API notes](https://github.com/PowerUserZ/OpenTokenUsage/blob/main/docs/local-http-api.md). Do not open firewall ports or expose it to your network. |
-| Wrong account or old readings | Check the selected account and refresh time in OpenTokenUsage. BELAC Dock displays the data it receives. |
-| Reading exists but no percentage ring | Some providers supply text or credits without a percentage. The dock does not invent quota percentages. |
-| Still stuck | Open a [BELAC Dock issue](https://github.com/Belacosaur/BELAC-Dock/issues) with your Windows/app versions and the wizard message. Redact account details and paths from screenshots. Provider login issues belong with OpenTokenUsage. |
-
-## For developers
-
-BELAC Dock reads `GET http://127.0.0.1:6736/v1/usage`. OpenTokenUsage documents this as a cached, read-only list for enabled providers; a successful response can be an empty array. No provider refresh or credential lookup is performed by the dock. The client rejects redirects, bypasses proxies, limits the response body to 1 MB and uses a five-second deadline.
-
-See the [upstream API contract](https://github.com/PowerUserZ/OpenTokenUsage/blob/main/docs/local-http-api.md) and [BELAC Dock architecture](ARCHITECTURE.md). Upstream provider support and login requirements can change independently of BELAC Dock.
+These usage endpoints are undocumented and may change. Mappings are adapted from MIT-licensed [OpenTokenUsage](https://github.com/PowerUserZ/OpenTokenUsage); see [third-party notices](THIRD_PARTY_NOTICES.md). Native readers provide usage limits, not the companion's full spend-history, multi-account or credit-management features.
