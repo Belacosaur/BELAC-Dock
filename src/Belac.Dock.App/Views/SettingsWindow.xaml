@@ -1,0 +1,197 @@
+<Window x:Class="Belac.Dock.App.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:Belac.Dock.App"
+        local:DialogChrome.DarkCaption="True"
+        Title="BELAC Dock Settings"
+        Width="860"
+        Height="720"
+        MinWidth="760"
+        MinHeight="520"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource Brush.Background}"
+        Foreground="{DynamicResource Brush.Foreground}"
+        FontFamily="Segoe UI Variable Text, Segoe UI">
+    <Window.Resources>
+        <Style x:Key="SettingsNav" TargetType="TabItem">
+            <Setter Property="Width" Value="150"/><Setter Property="Foreground" Value="{DynamicResource Brush.Muted}"/><Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="TabItem">
+                <Border x:Name="Nav" Background="Transparent" CornerRadius="10" Padding="16,13" Margin="0,0,12,5"><ContentPresenter ContentSource="Header"/></Border>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsSelected" Value="True"><Setter TargetName="Nav" Property="Background" Value="{DynamicResource Brush.Hover}"/><Setter Property="Foreground" Value="{DynamicResource Brush.Accent}"/></Trigger>
+                    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Nav" Property="Background" Value="{DynamicResource Brush.Surface}"/></Trigger>
+                    <Trigger Property="IsKeyboardFocused" Value="True"><Setter Property="Foreground" Value="{DynamicResource Brush.Foreground}"/></Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate></Setter.Value></Setter>
+        </Style>
+    </Window.Resources>
+    <DockPanel Margin="30">
+        <TextBlock DockPanel.Dock="Top" Style="{StaticResource TitleText}" Text="Your workspace. Your way." FontSize="28" Margin="0,0,0,28"/>
+        <TabControl TabStripPlacement="Left" ItemContainerStyle="{StaticResource SettingsNav}">
+            <TabItem Header="Appearance">
+                <Border Style="{StaticResource WorkspaceCard}" Margin="12,0,0,0" Padding="26">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,20"><TextBlock Text="Appearance" FontSize="22" FontWeight="SemiBold"/><TextBlock Text="Set the feel of your workspace." FontSize="12" Foreground="{DynamicResource Brush.Muted}" Margin="0,6,0,0" TextWrapping="Wrap"/></StackPanel>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="0">
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="Colour theme"/>
+                    <ListBox x:Name="ThemePicker" SelectionChanged="ThemeChanged" Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,0,12" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Colour theme">
+                        <ListBox.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="3"/></ItemsPanelTemplate></ListBox.ItemsPanel>
+                        <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="Cursor" Value="Hand"/>
+                            <Setter Property="AutomationProperties.Name" Value="{Binding Name}"/>
+                            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem">
+                                <Border x:Name="Tile" Margin="3" Padding="10" CornerRadius="10" Background="{Binding Surface}" BorderBrush="{Binding Border}" BorderThickness="1"><ContentPresenter/></Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsSelected" Value="True"><Setter TargetName="Tile" Property="BorderBrush" Value="{Binding Accent}"/><Setter TargetName="Tile" Property="BorderThickness" Value="2"/></Trigger>
+                                    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Tile" Property="Background" Value="{Binding Hover}"/></Trigger>
+                                    <Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="Tile" Property="BorderBrush" Value="White"/></Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate></Setter.Value></Setter>
+                        </Style></ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate><DataTemplate><StackPanel>
+                            <Border Background="{Binding Background}" Height="30" CornerRadius="5" Margin="0,0,0,8"><StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"><Ellipse Fill="{Binding Accent}" Width="12" Height="12" Margin="0,0,5,0"/><Border Background="{Binding Hover}" Width="28" Height="6" CornerRadius="3"/></StackPanel></Border>
+                            <TextBlock Text="{Binding Name}" Foreground="{Binding Accent}" FontSize="12" HorizontalAlignment="Center"/>
+                        </StackPanel></DataTemplate></ListBox.ItemTemplate>
+                    </ListBox>
+                    <TextBlock Style="{StaticResource MutedText}" Text="Applies instantly and is saved automatically." Margin="0,0,0,16"/>
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="Bar width"/>
+                    <Slider x:Name="WidthSlider" Minimum="76" Maximum="112" TickFrequency="2" IsSnapToTickEnabled="True" ValueChanged="WidthSlider_ValueChanged"/>
+                    <TextBlock x:Name="WidthLabel" Style="{StaticResource MutedText}"/>
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="Icon size"/>
+                    <Slider x:Name="IconSlider" Minimum="16" Maximum="34" TickFrequency="2" IsSnapToTickEnabled="True" ValueChanged="IconSlider_ValueChanged"/>
+                    <CheckBox x:Name="AnimationBox" Content="Animate hover and flyouts" Checked="AppearanceChanged" Unchecked="AppearanceChanged"/>
+                    <TextBlock Style="{StaticResource MutedText}" Margin="0,8,0,0" Text="Windows reduced-motion and high contrast are honored automatically."/>
+                </StackPanel>
+            </ScrollViewer>
+                    </DockPanel>
+                </Border>
+            </TabItem>
+            <TabItem Header="Position">
+                <Border Style="{StaticResource WorkspaceCard}" Margin="12,0,0,0" Padding="26">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,20"><TextBlock Text="Position" FontSize="22" FontWeight="SemiBold"/><TextBlock Text="Keep your dock exactly where you need it." FontSize="12" Foreground="{DynamicResource Brush.Muted}" Margin="0,6,0,0" TextWrapping="Wrap"/></StackPanel>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="0">
+                    <TextBlock Style="{StaticResource BodyText}" Text="Your dock floats above the desktop. Drag the top handle to move it and the lower corner to resize. Position and size are remembered automatically." Margin="0,0,0,16"/>
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="Monitor"/>
+                    <ComboBox x:Name="MonitorBox" DisplayMemberPath="Label" SelectionChanged="MonitorChanged"/>
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="Starting edge"/>
+                    <ComboBox x:Name="EdgeBox" SelectionChanged="EdgeChanged">
+                        <ComboBoxItem Content="Right"/>
+                        <ComboBoxItem Content="Left"/>
+                    </ComboBox>
+                    <CheckBox x:Name="ReserveBox" Content="Reserve screen space" Visibility="Collapsed" Checked="PositionChanged" Unchecked="PositionChanged"/>
+                    <CheckBox x:Name="TopmostBox" Content="Keep the dock above other windows" Checked="PositionChanged" Unchecked="PositionChanged"/>
+                    <CheckBox x:Name="YieldBox" Content="Hide the dock while a fullscreen app is active" Checked="PositionChanged" Unchecked="PositionChanged"/>
+                    <CheckBox x:Name="MinimizeFocusedBox" Content="Clicking the focused app minimizes it" Checked="PositionChanged" Unchecked="PositionChanged"/>
+                </StackPanel>
+            </ScrollViewer>
+                    </DockPanel>
+                </Border>
+            </TabItem>
+            <TabItem Header="Applications">
+                <Border Style="{StaticResource WorkspaceCard}" Margin="12,0,0,0" Padding="26">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,20"><TextBlock Text="Applications" FontSize="22" FontWeight="SemiBold"/><TextBlock Text="The tools you reach for, all in one place." FontSize="12" Foreground="{DynamicResource Brush.Muted}" Margin="0,6,0,0" TextWrapping="Wrap"/></StackPanel>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <DockPanel Margin="0">
+                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Style="{StaticResource TextButton}" Content="Add" Click="AddApp_Click" AutomationProperties.Name="Add application"/>
+                        <Button Style="{StaticResource TextButton}" Content="Edit" Click="EditApp_Click" AutomationProperties.Name="Edit application"/>
+                        <Button Style="{StaticResource TextButton}" Content="Remove" Click="RemoveApp_Click" AutomationProperties.Name="Remove application"/>
+                    </StackPanel>
+                    <ListBox x:Name="AppList" Background="{DynamicResource Brush.Surface}" Foreground="{DynamicResource Brush.Foreground}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="4,6">
+                                    <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding ExePath}" Foreground="{DynamicResource Brush.Muted}" FontSize="11" TextTrimming="CharacterEllipsis"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </ScrollViewer>
+                    </DockPanel>
+                </Border>
+            </TabItem>
+            <TabItem Header="Taskbar">
+                <Border Style="{StaticResource WorkspaceCard}" Margin="12,0,0,0" Padding="26">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,20"><TextBlock Text="Taskbar" FontSize="22" FontWeight="SemiBold"/><TextBlock Text="Choose how your dock works alongside Windows." FontSize="12" Foreground="{DynamicResource Brush.Muted}" Margin="0,6,0,0" TextWrapping="Wrap"/></StackPanel>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="0">
+                    <TextBlock Style="{StaticResource BodyText}" Text="Mirror mode is the default. Dock-only is per app, from the dock's right-click menu. If Windows cannot confirm the button is gone, the app stays mirrored. Style compatibility can remove Alt+Tab and is off unless you turn it on for that app."/>
+                    <Button Style="{StaticResource TextButton}" Content="Restore all managed windows" Margin="0,12,0,0" Click="Restore_Click" AutomationProperties.Name="Restore all managed windows"/>
+                    <Button Style="{StaticResource TextButton}" Content="Pause taskbar separation" Margin="0,8,0,0" Click="Pause_Click" AutomationProperties.Name="Pause taskbar separation"/>
+                    <TextBlock x:Name="SeparationStatus" Style="{StaticResource MutedText}" Margin="0,8,0,0"/>
+                </StackPanel>
+            </ScrollViewer>
+                    </DockPanel>
+                </Border>
+            </TabItem>
+            <TabItem Header="Startup">
+                <Border Style="{StaticResource WorkspaceCard}" Margin="12,0,0,0" Padding="26">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,20"><TextBlock Text="Startup" FontSize="22" FontWeight="SemiBold"/><TextBlock Text="Ready when you are." FontSize="12" Foreground="{DynamicResource Brush.Muted}" Margin="0,6,0,0" TextWrapping="Wrap"/></StackPanel>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="0">
+                    <CheckBox x:Name="AutostartBox" Content="Launch BELAC Dock when I sign in" Checked="StartupChanged" Unchecked="StartupChanged"/>
+                    <CheckBox x:Name="MinimizedBox" Content="Start hidden in the tray" Checked="StartupChanged" Unchecked="StartupChanged"/>
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="Keyboard shortcut"/>
+                    <TextBox x:Name="ShortcutBox" IsReadOnly="True" PreviewKeyDown="ShortcutBox_PreviewKeyDown" AutomationProperties.Name="Keyboard shortcut"/>
+                    <TextBlock x:Name="ShortcutWarning" Style="{StaticResource MutedText}" Margin="0,6,0,0" Text="Click the box and press a shortcut that includes Ctrl, Alt, Shift, or the Windows key."/>
+                </StackPanel>
+            </ScrollViewer>
+                    </DockPanel>
+                </Border>
+            </TabItem>
+            <TabItem Header="Usage">
+                <Border Style="{StaticResource WorkspaceCard}" Margin="12,0,0,0" Padding="26">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,20"><TextBlock Text="Usage" FontSize="22" FontWeight="SemiBold"/><TextBlock Text="A clear view of your AI capacity." FontSize="12" Foreground="{DynamicResource Brush.Muted}" Margin="0,6,0,0" TextWrapping="Wrap"/></StackPanel>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="0">
+                    <CheckBox x:Name="UsageEnabledBox" Content="Enable AI usage readings" Checked="UsageChanged" Unchecked="UsageChanged"/>
+                    <CheckBox x:Name="UsageHideBox" Content="Collapse the rail on short displays" Visibility="Collapsed" Checked="UsageChanged" Unchecked="UsageChanged"/>
+                    <CheckBox x:Name="RemainingBox" Content="Label rings as remaining instead of used" Checked="UsageChanged" Unchecked="UsageChanged"/>
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="Refresh interval (seconds)"/>
+                    <Slider x:Name="IntervalSlider" Minimum="30" Maximum="900" TickFrequency="30" IsSnapToTickEnabled="True" ValueChanged="IntervalChanged"/>
+                    <TextBlock x:Name="IntervalLabel" Style="{StaticResource MutedText}"/>
+                    <TextBlock Style="{StaticResource MutedText}" Margin="0,8,0,0" Text="Connect your providers in OpenTokenUsage to see their latest readings here."/>
+                    <Button Style="{StaticResource TextButton}" Content="Open OpenTokenUsage" Margin="0,12,0,0" Click="OpenUsage_Click" AutomationProperties.Name="Open OpenTokenUsage"/>
+                    <Button Style="{StaticResource TextButton}" Content="Refresh now" Margin="0,8,0,0" Click="RefreshUsage_Click" AutomationProperties.Name="Refresh usage now"/>
+                    <TextBlock Style="{StaticResource FieldLabel}" Text="Providers from the last reading"/>
+                    <ListBox x:Name="ProviderList" Height="140" Background="{DynamicResource Brush.Surface}" Foreground="{DynamicResource Brush.Foreground}" DisplayMemberPath="Label"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Style="{StaticResource TextButton}" Content="Move up" Click="ProviderUp_Click" AutomationProperties.Name="Move provider up"/>
+                        <Button Style="{StaticResource TextButton}" Content="Move down" Click="ProviderDown_Click" AutomationProperties.Name="Move provider down"/>
+                        <Button Style="{StaticResource TextButton}" Content="Hide" Click="ProviderHide_Click" AutomationProperties.Name="Hide provider"/>
+                        <Button Style="{StaticResource TextButton}" Content="Show again" Click="ProviderShow_Click" AutomationProperties.Name="Show provider again"/>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+                    </DockPanel>
+                </Border>
+            </TabItem>
+            <TabItem Header="Diagnostics">
+                <Border Style="{StaticResource WorkspaceCard}" Margin="12,0,0,0" Padding="26">
+                    <DockPanel>
+                        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,20"><TextBlock Text="Diagnostics" FontSize="22" FontWeight="SemiBold"/><TextBlock Text="Details that help keep things running." FontSize="12" Foreground="{DynamicResource Brush.Muted}" Margin="0,6,0,0" TextWrapping="Wrap"/></StackPanel>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <DockPanel Margin="0">
+                    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Style="{StaticResource TextButton}" Content="Refresh" Click="RefreshDiagnostics_Click" AutomationProperties.Name="Refresh diagnostics"/>
+                        <Button Style="{StaticResource TextButton}" Content="Export diagnostic ZIP" Click="Export_Click" AutomationProperties.Name="Export diagnostic ZIP"/>
+                    </StackPanel>
+                    <TextBox Height="340" x:Name="DiagnosticsBox" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"/>
+                </DockPanel>
+            </ScrollViewer>
+                    </DockPanel>
+                </Border>
+            </TabItem>
+        </TabControl>
+    </DockPanel>
+</Window>

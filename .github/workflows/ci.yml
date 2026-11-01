@@ -1,0 +1,25 @@
+name: Windows checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  build-test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build
+        run: ./scripts/build.ps1
+      - name: Unit tests
+        run: dotnet test BELAC.Dock.sln -c Release --no-build --nologo
+      - name: Dependency audit
+        shell: pwsh
+        run: |
+          dotnet list BELAC.Dock.sln package --vulnerable --include-transitive --format json > audit.json
+          if ($LASTEXITCODE -ne 0) { throw "Dependency audit failed" }
+          $audit = Get-Content audit.json -Raw | ConvertFrom-Json
+          if ($audit.problems) { throw "Dependency audit could not complete" }
+          $packages = @($audit.projects.frameworks.topLevelPackages) + @($audit.projects.frameworks.transitivePackages)
+          if ($packages | Where-Object { $_.vulnerabilities }) { throw "Vulnerable dependencies found" }
