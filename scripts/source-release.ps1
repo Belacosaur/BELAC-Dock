@@ -9,7 +9,7 @@ $stage = Join-Path $root "dist/BELAC.Dock-source-$stamp"
 New-Item -ItemType Directory -Path $stage -Force | Out-Null
 $roots = @("src", "tests", "samples", "scripts", "docs", ".github")
 $rootFiles = @("BELAC.Dock.sln", "global.json", ".gitignore", "README.md", "ARCHITECTURE.md", "USAGE_INTEGRATION.md", "CONTRIBUTING.md", "SECURITY.md", "THIRD_PARTY_NOTICES.md", "LICENSE")
-$extensions = @(".cs", ".csproj", ".xaml", ".manifest", ".ico", ".svg", ".md", ".txt", ".ps1", ".yml", ".yaml")
+$extensions = @(".cs", ".csproj", ".xaml", ".manifest", ".ico", ".svg", ".png", ".md", ".txt", ".ps1", ".yml", ".yaml")
 $files = @()
 foreach ($name in $rootFiles) {
     $path = Join-Path $root $name

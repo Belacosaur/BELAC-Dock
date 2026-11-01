@@ -9,6 +9,23 @@ A thin, floating taskbar for Windows 11, with local app shortcuts and LLM usage 
 - Optional per-app **Dock-only** mode hides running taskbar buttons, with recovery and a configurable compatibility fallback.
 - Provider logos and usage rings use the local OpenTokenUsage service at `http://127.0.0.1:6736`. No provider credentials are required by the dock.
 
+## Screenshots
+
+<table>
+  <tr>
+    <th>Floating taskbar</th>
+    <th>App actions</th>
+    <th>Codex usage</th>
+    <th>Cursor usage</th>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/dock.png" alt="Thin floating dock with app shortcuts and LLM rings" height="420"></td>
+    <td align="center"><img src="docs/screenshots/app-menu.png" alt="App context menu with window actions" height="420"></td>
+    <td align="center"><img src="docs/screenshots/codex-usage.png" alt="Codex usage popout with weekly quota and usage details" height="420"></td>
+    <td align="center"><img src="docs/screenshots/cursor-usage.png" alt="Cursor usage popout with quota progress bars" height="420"></td>
+  </tr>
+</table>
+
 ## Requirements and running
 
 Windows 11 x64. The portable release includes the .NET 10 runtime: unzip it and run `BELAC.Dock.exe`. The build is unsigned.
