@@ -30,6 +30,7 @@ public sealed class AppHost : IDisposable
         Tracker = new WindowTracker();
         Controller = new WindowController();
         Separation = new TaskbarSeparationService(new JsonRecoveryJournalStore(), Inspector, detail => Logger.LogInformation("Taskbar separation: {Detail}", detail));
+        RecoveryPending = Separation.Snapshots.Count > 0;
         Appbar = new ShellAppbarService();
         Monitors = new MonitorCatalog();
         Icons = new IconExtractor();
@@ -71,6 +72,7 @@ public sealed class AppHost : IDisposable
     public NotifyIcon Tray { get; }
     public ILogger Logger { get; }
     public bool Exiting { get; private set; }
+    public bool RecoveryPending { get; set; }
     public bool ShortcutRegistered { get; private set; }
     public string ShortcutWarning { get; private set; } = "";
 

@@ -158,12 +158,16 @@ public partial class DockWindow : Window
 
     private void OfferRecovery()
     {
+        // Only records loaded at startup warrant a recovery prompt. Tracking can create
+        // new records before this dispatcher callback runs, even after a clean launch.
+        if (!_host.RecoveryPending) return;
+        _host.RecoveryPending = false;
         var entries = _host.Separation.Snapshots;
         if (entries.Count == 0)
             return;
 
         var valid = entries.Count(entry => _host.Inspector.TryInspect(entry.Hwnd, out var observation) && Belac.Dock.Core.Matching.JournalValidator.IsSameWindow(entry, observation));
-        var dialog = new RecoveryWindow(valid, entries.Count - valid);
+        var dialog = new RecoveryWindow(valid, entries.Count - valid) { Owner = this, Topmost = true };
         if (dialog.ShowDialog() == true)
             _viewModel.RestoreAll();
         else
