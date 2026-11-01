@@ -1,81 +1,76 @@
-# BELAC Dock — OpenTokenUsage / Pulse-style Usage Rail Addendum
+# Connect your AI usage
 
-## Objective
-Extend BELAC Dock's existing always-on-top right-edge WPF dock by installing a Pulse-inspired usage rail at its *bottom*. The top remains the local application launcher/window manager. The bottom displays live subscription quota use from the user's already-installed OpenTokenUsage app. This is an integration, not an independent quota collector.
+BELAC Dock shows your AI usage at the bottom of the taskbar. A separate, free companion app called **OpenTokenUsage** connects to your providers and supplies the readings.
 
-## Verified sources and constraints
-- OpenTokenUsage Windows repo: https://github.com/PowerUserZ/OpenTokenUsage (MIT). It documents a local, loopback-only HTTP API on `127.0.0.1:6736` and many provider plugins (Claude, Codex, Cursor, Grok, Copilot, etc.).
-- Upstream OpenUsage API: https://github.com/robinebers/openusage documents `/v1/limits` and legacy `/v1/usage`. **Do not assume the installed Windows fork has identical schemas or endpoint details until checked against the installed version, its own source, and actual local responses.**
-- Pulse design reference: https://tommyent.github.io/pulse/ (MIT source, macOS only): concentric usage rings, outside=leading short window and inside=second longer window, click for detailed usage and reset, red threshold states, right-side rail with compact appearance. Use as a UX reference, do not use Mac-only binaries or blindly copy their UI code/assets.
+You do not need to write code, configure a server, or give BELAC Dock your passwords or API keys. Your app shortcuts work even if you skip AI setup.
 
-## Functional requirements
-1. **Always visible bottom anchored rail**: existing vertical app icons above, fixed bottom quota area below. Dock app list independently scrolls when many apps. Usage rail never scrolls offscreen. If height too short, compact or collapse quota area with a single toggle; never cover Windows controls or push icons offscreen.
-2. **Provider display**: discovered enabled providers, default order Cursor, Codex, Claude, Grok, then others; user can re-order/show/hide. No fabricated values. Display only available metrics, represent unsupported/unknown as '--' with tooltip. Provider logos are optional and must have approved/local assets or neutral monograms.
-3. **Pulse-like rings**: outer stroke=session/shorter quota window, inner stroke=weekly/next-longer quota window when data supports it. Each stroke indicates **used percentage**, default 0–100; threshold colours normal <80%, caution 80–94%, critical >=95%. Separate status for fetch failure; grey unknown vs zero. Make ring legends, used/remaining preference, and label explicit in detail card. For credit-only providers, use one ring or labelled numerical chip; never imply percentages when no denominator exists.
-4. **Details flyout**: clicking a ring opens a lightweight WPF flyout to the *left* of right-edge dock: provider/account name if exposed, used/remaining, actual quota window labels, reset timestamp with local timezone and relative countdown, available credits or balance, last updated, stale/error state, button to open original OpenTokenUsage UI, manual refresh if supported, close by Escape/outside-click. Accessible keyboard and automation names.
-5. **Auto update**: bounded HttpClient timeout (2s connection; 5s total), cancellation when dock exits, poll local API every 60–120 seconds (configurable 30–900), **do not trigger upstream provider refreshes unless explicit API contract supports them**. Honor upstream cache/staleness; keep last successful values with 'stale' badge when disconnected. Deduplicate concurrent fetches, no busy waits, no provider credential reads.
-6. **Privacy/security**: use fixed `http://127.0.0.1:6736` only, never expose API outside localhost, no remote HTTP requests/telemetry, do not log raw responses or secrets. Treat all payloads untrusted; size cap 1MB; validate/limit string lengths and percents; safely parse timestamps; ignore unknown fields and schema variants.
-7. **Availability states**: if OpenTokenUsage is closed, API disabled, version unsupported, or not configured, show informative 'Usage unavailable' state with retry and instructions instead of a blank/error-crash dock. Dock/app switching continues normally. Detect API version/features at startup and on reconnect.
-8. **Settings**: Enable usage panel; auto-hide on constrained displays; provider visibility and order; show used vs remaining; refresh interval; colours/thresholds; labels; launch OpenTokenUsage. Save in BELAC Dock user-local JSON alongside current settings. Version and migrate existing settings without losing app mappings.
-9. **Taskbar integration**: This module must not change taskbar-hiding logic, Win32 styles of third-party windows or taskbar state. Preserve fail-safe taskbar restore and existing app tracking.
+## Start the guided setup
 
-## Architecture
+Open **BELAC Dock → Settings → Usage → Connect AI usage**. You can also click the connect icon at the bottom of an empty usage rail, or choose the optional setup during your first launch.
 
-```text
-BELAC Dock Shell (WPF)
-  ├── AppDockView + AppDockViewModel (existing, scrollable upper region)
-  ├── UsageRailView (bottom-docked, fixed-size, never scrolls)
-  │     ├── ProviderRingControl (vector WPF paths/arcs, DPI-aware)
-  │     ├── UsageRailViewModel
-  │     └── UsageDetailsFlyoutView + ViewModel
-  ├── UsageService
-  │     ├── IUsageProviderSource
-  │     ├── OpenTokenUsageSource (loopback HTTP, schema adapters)
-  │     ├── UsageSnapshotNormalizer (canonical metric model)
-  │     └── UsagePollingCoordinator (cancellation, stale-on-error)
-  └── SettingsStore (versioned per-user JSON)
+The wizard has three steps. You can go back or select **Set up later** at any time.
+
+## 1. Install and open OpenTokenUsage
+
+1. In the wizard, select **Download OpenTokenUsage**. This opens its [official release page](https://github.com/PowerUserZ/OpenTokenUsage/releases/latest).
+2. Download the Windows **x64 setup executable** from the release assets, not the source-code ZIP.
+3. Run the setup file and open OpenTokenUsage. You choose whether to install it; BELAC Dock does not install anything automatically.
+4. Return to the wizard and select **Next**.
+
+Already have it? Select **Open OpenTokenUsage**, or search for it in the Windows Start menu. It may open in the notification area beside the clock; check the hidden-icons arrow too.
+
+For people who prefer a terminal, the project's documented alternative is:
+
+```powershell
+winget install PowerUserZ.OpenTokenUsage
 ```
 
-### Suggested canonical models
+## 2. Connect your providers in the companion
 
-```csharp
-record UsageMetric(string Key, string Label, double? UsedPercent,
-    decimal? Used, decimal? Limit, decimal? Remaining, string? Unit,
-    DateTimeOffset? ResetsAt, string? WindowLabel);
-record ProviderUsage(string Id, string DisplayName, string? Plan,
-    IReadOnlyList<UsageMetric> Metrics, DateTimeOffset? FetchedAt,
-    bool IsStale, string? Error);
-record UsageSnapshot(DateTimeOffset ObservedAt,
-    IReadOnlyList<ProviderUsage> Providers, string? SourceError);
-```
+Open OpenTokenUsage, enable the providers you use, and follow the setup or sign-in guidance shown for each one. Refresh its panel until you can see your usage there.
 
-Use an interface and adapter rather than binding the UI directly to any upstream JSON. Support percent values expressed as 0..1 or 0..100 *only after checking contract/schema*, otherwise fail safe; do not silently guess. Use invariant culture for numeric parsing. There may be multiple windows/account pools; present actual names, do not relabel model limits 'weekly' without data. If API returns no enabled providers show setup guidance.
+| Provider | Where to start |
+| :--- | :--- |
+| Codex | Make sure your Codex coding tool is signed into the intended account. Enable Codex in OpenTokenUsage and follow any missing-login guidance it shows. A ChatGPT website login alone may not be sufficient. |
+| Claude | Make sure the Claude coding tool/account you want to track is signed in. Enable Claude and follow the companion's setup guidance. Browser chat and coding-tool authentication are not necessarily interchangeable. |
+| Cursor | Sign into the account you use in Cursor, enable Cursor in OpenTokenUsage, and follow its provider-specific instructions if usage is unavailable. |
+| Copilot or another provider | Enable the provider in OpenTokenUsage and follow its instructions. Supported account types and setup steps vary. |
 
-## UI layout
-- Right edge on selected monitor. Width existing default, expand to ~76–88 DIP as needed, scale with monitor DPI. Top app icon region is flexible height and scrollable; bottom quota region uses `DockPanel.Dock=Bottom`/grid `Auto` row, separated by hairline. At 4 providers each ring 42–54 DIP plus spacing may require collapsing or internal compact mode on short screens. Ensure system tray area/bottom taskbar stays unobstructed through appbar reserved work area.
-- Usage section header small subdued `AI USAGE`, optional refresh dot, 4–6 rings below. Use distinct concentric vector paths and a small monogram/logo in centre. Ring hover/keyboard focus tooltips show provider and both percentage labels; click opens left-positioned flyout clamped inside monitor working area.
-- Visual palette: same dock tokens; outer ring cool blue, inner ring mint green, orange >=80, red >=95. Unknown track dim grey. Provide high contrast and reduced-motion setting. Hover should not expand the entire dock unexpectedly.
-- Only show real values in production. Fixtures/mock data belong in tests/design previews, never substituted for unavailable live readings.
+Use **Help for your provider** in the wizard for the upstream instructions, or visit the [supported-provider list](https://github.com/PowerUserZ/OpenTokenUsage#supported-providers).
 
-## Implementation steps in this pass
-1. Inspect existing BELAC Dock repo and installed OpenTokenUsage API docs/source and test local `127.0.0.1:6736` endpoints (start with documented fork docs; inspect `/v1/limits` and `/v1/usage` if available). No network to upstream AI providers; no credentials needed.
-2. Build C# models, `IUsageProviderSource`, robust HTTP adapter, schema normalization, failure states. Keep endpoint path configurable **only inside explicit allowed loopback route set**.
-3. Implement polling coordinator with cancellation, retry/backoff, stale state, source status. Ensure thread-safe updates dispatched on WPF UI thread.
-4. Build ring component with vector drawing, DPI scaling and exact arc endpoints, negative/NaN clamp. Add unit tests (0, 50, 99, 100%, unavailable, over-100 inputs).
-5. Add bottom-anchored UsageRailView and details flyout with sample data *only in design/test mode*.
-6. Wire live provider data, settings, order/visibility, optional local OpenTokenUsage launch and diagnostics.
-7. Validate end-to-end on Windows: four providers if enabled, refresh, outage/restart, monitor DPI, app-list overflow, taskbar restore, multi-monitor, AutoStart, click outside, Escape, accessibility.
-8. Update docs and self-contained x64 publish; produce a validation report noting actual tested OpenTokenUsage version, API route/schema, provider coverage, and unsupported cases.
+Complete sign-ins in the appropriate app or browser. **Do not paste passwords, tokens, cookies or credential-file contents into BELAC Dock, an AI chat, or a public issue.** BELAC Dock has no credential-entry fields. OpenTokenUsage handles provider connections separately.
 
-## Acceptance tests
-- Dock stays on right, always on top; apps function as before.
-- Usage area stays at physical bottom when app list overflows; keyboard/mouse access works.
-- Live data agrees with OpenTokenUsage for same snapshot; no hardcoded demo % in production.
-- Correct distinction between usage amount, percent, remaining, resets, errors and stale status.
-- Unavailable API does not crash, block UI, or empty previously known values without clearly marking stale.
-- Settings survive restart; app bindings not lost.
-- No cloud backend, token collection, credentials scraping, telemetry, or forced provider refresh.
-- Tests and Windows x64 publish pass; known limitations documented rather than misrepresented.
+## 3. Check and show readings
 
-## Important product boundary
-This is a BELAC Dock **consumer** of the user's existing OpenTokenUsage. Do not fork, rewrite, bundle, or replace OpenTokenUsage. Don't build the Codex pet/voice assistant, sleep breaks, or Mac-only Pulse features; the request is for the Pulse-like visual usage rail at the bottom of the local apps dock.
+Return to the wizard and select **Next**. It checks the local connection and lists the provider readings it received.
+
+- **Readings received:** select **Show readings on dock**. This enables usage and makes those providers visible, including any you previously hid.
+- **Connected — waiting for readings:** the connection works, but there is no usable provider data yet. Finish setup and refresh in OpenTokenUsage, then choose **Check again**.
+- **No connection yet:** open OpenTokenUsage and leave it running. If it is already running, restart it, wait for its panel to load, and check again.
+
+You can finish with one provider and connect more later. A provider missing from the list has not supplied data to the dock yet; installing its app alone does not guarantee it will appear.
+
+The check reads cached usage from OpenTokenUsage. It does not prove your provider login is still valid or request fresh quota data directly. Check the displayed update time; refresh in OpenTokenUsage if you need a newer reading.
+
+## Keep it working
+
+Keep OpenTokenUsage running in the tray while you use the dock. If you want both apps available after restarting Windows, enable their start-at-sign-in options separately. Closing the companion stops new readings; the dock can retain older readings marked stale.
+
+In **Settings → Usage**, you can hide or reorder providers and change how often BELAC Dock checks for updates. This changes the dock's polling interval, not the companion's provider-refresh schedule.
+
+## Common problems
+
+| What you see | What to try |
+| :--- | :--- |
+| Companion not detected, but you installed it | Open it from Windows Start. Detection can miss portable/custom installations; a working local connection can still be used. |
+| Provider missing or needs attention | Enable and refresh it in OpenTokenUsage. Resolve its account/sign-in error there first. |
+| Usage is visible in the companion but the dock cannot connect | Restart the companion. Its local API normally starts automatically; another program using port 6736 can prevent it from starting. See the [upstream local API notes](https://github.com/PowerUserZ/OpenTokenUsage/blob/main/docs/local-http-api.md). Do not open firewall ports or expose it to your network. |
+| Wrong account or old readings | Check the selected account and refresh time in OpenTokenUsage. BELAC Dock displays the data it receives. |
+| Reading exists but no percentage ring | Some providers supply text or credits without a percentage. The dock does not invent quota percentages. |
+| Still stuck | Open a [BELAC Dock issue](https://github.com/Belacosaur/BELAC-Dock/issues) with your Windows/app versions and the wizard message. Redact account details and paths from screenshots. Provider login issues belong with OpenTokenUsage. |
+
+## For developers
+
+BELAC Dock reads `GET http://127.0.0.1:6736/v1/usage`. OpenTokenUsage documents this as a cached, read-only list for enabled providers; a successful response can be an empty array. No provider refresh or credential lookup is performed by the dock. The client rejects redirects, bypasses proxies, limits the response body to 1 MB and uses a five-second deadline.
+
+See the [upstream API contract](https://github.com/PowerUserZ/OpenTokenUsage/blob/main/docs/local-http-api.md) and [BELAC Dock architecture](ARCHITECTURE.md). Upstream provider support and login requirements can change independently of BELAC Dock.

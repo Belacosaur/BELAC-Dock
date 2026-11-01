@@ -37,6 +37,8 @@ public partial class OnboardingWindow : Window
         }
     }
 
+    private void ConnectUsage_Click(object sender, RoutedEventArgs e) => new ConnectUsageWindow(_host) { Owner = this }.ShowDialog();
+
     private void Back_Click(object sender, RoutedEventArgs e)
     {
         if (_step == 0)

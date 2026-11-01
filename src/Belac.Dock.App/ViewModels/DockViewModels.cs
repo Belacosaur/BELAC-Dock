@@ -345,6 +345,9 @@ public partial class DockViewModel : ObservableObject
     private void OpenUsageApp() => _host.OpenUsageApp();
 
     [RelayCommand]
+    private void ConnectUsage() => _host.ConnectUsage();
+
+    [RelayCommand]
     private void ShowUsage(ProviderRowViewModel? row)
     {
         if (row is null)

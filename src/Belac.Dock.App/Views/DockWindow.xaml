@@ -82,7 +82,7 @@
         </Button>
        </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
       </ScrollViewer>
-      <Button Style="{StaticResource IconButton}" Width="44" Height="42" Command="{Binding OpenUsageAppCommand}" ToolTip="Connect LLM providers in OpenTokenUsage" AutomationProperties.Name="Connect usage" Visibility="{Binding Usage.HasData, Converter={StaticResource BoolVisInvert}}"><TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Brush.Muted}"/></Button>
+      <Button Style="{StaticResource IconButton}" Width="44" Height="42" Command="{Binding ConnectUsageCommand}" ToolTip="Connect AI usage — guided setup" AutomationProperties.Name="Connect usage" Visibility="{Binding Usage.HasData, Converter={StaticResource BoolVisInvert}}"><TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" Foreground="{DynamicResource Brush.Muted}"/></Button>
      </StackPanel>
     </Border>
    </Grid>

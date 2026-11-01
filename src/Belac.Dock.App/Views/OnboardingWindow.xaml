@@ -34,8 +34,10 @@
             <Button Style="{StaticResource TextButton}" Content="Browse for an app" Margin="0,8,0,0" Click="Browse_Click" AutomationProperties.Name="Browse for an app"/>
         </StackPanel>
         <StackPanel x:Name="SeparationStep" Visibility="Collapsed">
-            <TextBlock Style="{StaticResource TitleText}" Text="Taskbar separation stays off"/>
+            <TextBlock Style="{StaticResource TitleText}" Text="Ready for your workspace"/>
             <TextBlock Style="{StaticResource BodyText}" Margin="0,12,0,0" Text="Apps appear on the dock and on the normal taskbar. Dock-only is a per-app experiment. Windows may refuse it. A compatibility style change can also remove the Alt+Tab entry, and you can always restore it from the tray."/>
+            <Button Style="{StaticResource TextButton}" Content="Connect AI usage… (optional)" Click="ConnectUsage_Click" Margin="0,18,0,0"/>
+            <TextBlock Style="{StaticResource MutedText}" Text="A short guided setup for the usage rings. You can also do this later in Settings → Usage." Margin="0,8,0,0"/>
         </StackPanel>
     </DockPanel>
 </Window>

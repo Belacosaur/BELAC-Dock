@@ -108,6 +108,15 @@ public sealed class AppHost : IDisposable
             Dock.Usage.Apply(UsageSnapshot.Empty(DateTimeOffset.Now), Session.Current.Usage);
     }
 
+    public void ConnectUsage(System.Windows.Window? owner = null)
+    {
+        var existing = System.Windows.Application.Current.Windows.OfType<Belac.Dock.App.Views.ConnectUsageWindow>().FirstOrDefault();
+        if (existing is not null) { existing.Activate(); return; }
+        var wizard = new Belac.Dock.App.Views.ConnectUsageWindow(this);
+        if (owner is not null && owner.IsVisible) wizard.Owner = owner;
+        wizard.Show();
+    }
+
     public void OpenUsageApp()
     {
         var location = UsageApps.Locate();

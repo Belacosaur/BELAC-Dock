@@ -154,6 +154,7 @@
                         <StackPanel DockPanel.Dock="Top" Margin="0,0,0,20"><TextBlock Text="Usage" FontSize="22" FontWeight="SemiBold"/><TextBlock Text="A clear view of your AI capacity." FontSize="12" Foreground="{DynamicResource Brush.Muted}" Margin="0,6,0,0" TextWrapping="Wrap"/></StackPanel>
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <StackPanel Margin="0">
+                    <Button Style="{StaticResource TextButton}" Content="Connect AI usage…" HorizontalAlignment="Left" Margin="0,0,0,12" Click="ConnectUsage_Click" AutomationProperties.Name="Connect AI usage"/>
                     <CheckBox x:Name="UsageEnabledBox" Content="Enable AI usage readings" Checked="UsageChanged" Unchecked="UsageChanged"/>
                     <CheckBox x:Name="UsageHideBox" Content="Collapse the rail on short displays" Visibility="Collapsed" Checked="UsageChanged" Unchecked="UsageChanged"/>
                     <CheckBox x:Name="RemainingBox" Content="Label rings as remaining instead of used" Checked="UsageChanged" Unchecked="UsageChanged"/>

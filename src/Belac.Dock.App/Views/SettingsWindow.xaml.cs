@@ -221,6 +221,21 @@ public partial class SettingsWindow : Window
 
     private void Pause_Click(object sender, RoutedEventArgs e) => _host.Dock.TogglePauseCommand.Execute(null);
 
+    private void ConnectUsage_Click(object sender, RoutedEventArgs e)
+    {
+        _host.ConnectUsage(this);
+    }
+
+    protected override void OnActivated(EventArgs e)
+    {
+        base.OnActivated(e);
+        if (_loading) return;
+        _loading = true;
+        UsageEnabledBox.IsChecked = _host.Session.Current.Usage.Enabled;
+        ReloadProviders();
+        _loading = false;
+    }
+
     private void OpenUsage_Click(object sender, RoutedEventArgs e) => _host.OpenUsageApp();
 
     private async void RefreshUsage_Click(object sender, RoutedEventArgs e)

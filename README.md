@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <strong><a href="https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.0.0/BELAC.Dock-v1.0.0-win-x64.zip">Download for Windows 11 x64</a></strong>
+  <strong><a href="https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.1.0/BELAC.Dock-v1.1.0-win-x64.zip">Download for Windows 11 x64</a></strong>
   · <a href="#quick-start">Quick start</a>
   · <a href="#screenshots">Screenshots</a>
   · <a href="https://github.com/Belacosaur/BELAC-Dock/releases/latest">Release notes</a>
@@ -20,7 +20,7 @@
 
 ## Quick start
 
-1. **[Download the Windows ZIP](https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.0.0/BELAC.Dock-v1.0.0-win-x64.zip)** and extract the entire folder.
+1. **[Download the Windows ZIP](https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.1.0/BELAC.Dock-v1.1.0-win-x64.zip)** and extract the entire folder.
 2. Run **BELAC.Dock.exe** and choose your apps.
 3. Drag the top handle to position your dock. Pick a colour in **Settings → Appearance**.
 
@@ -66,11 +66,17 @@ No installer or separate runtime is needed. The build is unsigned. Checksums are
 | Bring the dock back | Use the tray icon or **Ctrl+Alt+Shift+D**. |
 | Start at sign-in | Enable it in Settings; it is off by default. |
 
-## LLM usage
+## Connect your AI usage
 
-Usage rings read from a separate **OpenTokenUsage** service running on `http://127.0.0.1:6736`. The dock does not need provider API keys. If that service is unavailable, the dock still works as an app launcher.
+Open **Settings → Usage → Connect AI usage** for a three-step walkthrough:
 
-See the [usage integration guide](USAGE_INTEGRATION.md) for the local API contract.
+1. Install or open the free OpenTokenUsage companion.
+2. Enable your providers and complete their sign-ins in that app.
+3. Check the connection and choose **Show readings on dock**.
+
+The wizard shows which providers supplied readings and what to do if the connection is unavailable. BELAC Dock never asks for your passwords or API keys. App launching works without the companion.
+
+**[Follow the beginner-friendly setup guide](USAGE_INTEGRATION.md)**
 
 ## Taskbar modes
 

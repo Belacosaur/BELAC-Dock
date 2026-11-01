@@ -168,6 +168,31 @@ internal static class Program
                 window.Show();
                 await Task.Delay(30);
                 Check(window.IsLoaded, "Settings templates load");
+                var setupSource = new SetupSource();
+                var setup = new ConnectUsageWindow(host, setupSource);
+                setup.Show();
+                var setupNext = (Button)setup.FindName("NextButton");
+                setupNext.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                setupNext.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                var setupCheck = (Button)setup.FindName("CheckButton");
+                for (var attempt = 0; attempt < 100 && !setupCheck.IsEnabled; attempt++) await Task.Delay(30);
+                Check(!setupNext.IsEnabled && ((TextBlock)setup.FindName("ConnectionTitle")).Text.Contains("No connection"), "Wizard blocks finish when connection is unavailable");
+                setupSource.Snapshot = UsageSnapshot.Empty(DateTimeOffset.Now);
+                setupCheck.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                for (var attempt = 0; attempt < 100 && !setupCheck.IsEnabled; attempt++) await Task.Delay(30);
+                Check(!setupNext.IsEnabled && ((TextBlock)setup.FindName("ConnectionTitle")).Text.Contains("waiting"), "Wizard distinguishes empty connected service from usable readings");
+                setupSource.Snapshot = new UsageSnapshot(DateTimeOffset.Now, [new ProviderUsage("setup-fixture", "Setup fixture", null,
+                    [new UsageMetric("quota", "Quota", 0, 0, 100, 100, "%", null, null, null, null)], DateTimeOffset.Now, false, null)], null);
+                host.Session.Current.Usage.HiddenProviderIds.Add("setup-fixture");
+                setupCheck.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                for (var attempt = 0; attempt < 100 && !setupCheck.IsEnabled; attempt++) await Task.Delay(30);
+                Check(setupNext.IsEnabled && ((ItemsControl)setup.FindName("Readings")).Items.Count == 1, "Wizard lists real readings and allows finish");
+                setupNext.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                Check(!setup.IsVisible && host.Session.Current.Usage.Enabled && !host.Session.Current.Usage.HiddenProviderIds.Contains("setup-fixture"), "Finish enables readings and reveals connected providers");
+                host.UsagePoll.Stop();
+                host.Session.Current.Usage.Enabled = false;
+                host.Session.Save();
+
                 var themePicker = (ListBox)window.FindName("ThemePicker");
                 var liveRingBrush = Palette.BandBrush(RingBand.Normal, false);
                 foreach (var theme in DockThemes.All)
@@ -210,6 +235,12 @@ internal static class Program
         var resultCode = application.Run();
         File.WriteAllLines(Path.Combine(home, "result.txt"), failures.Count == 0 ? ["PASS: all floating UI smoke checks"] : failures);
         return resultCode;
+    }
+
+    private sealed class SetupSource : Belac.Dock.Core.Abstractions.IUsageProviderSource
+    {
+        public UsageSnapshot Snapshot { get; set; } = UsageSnapshot.Failed(DateTimeOffset.Now, "offline");
+        public Task<UsageSnapshot> GetSnapshotAsync(CancellationToken cancellationToken) => Task.FromResult(Snapshot);
     }
 
     private static IEnumerable<T> Descendants<T>(DependencyObject root) where T : DependencyObject
