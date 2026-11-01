@@ -4,35 +4,41 @@
 
 <p align="center">
   <a href="https://github.com/Belacosaur/BELAC-Dock/releases/latest"><img src="https://img.shields.io/github/v/release/Belacosaur/BELAC-Dock?style=flat-square&amp;color=80d4b4" alt="Latest release"></a>
-  <a href="https://github.com/Belacosaur/BELAC-Dock/actions/workflows/ci.yml"><img src="https://github.com/Belacosaur/BELAC-Dock/actions/workflows/ci.yml/badge.svg" alt="Windows checks"></a>
+  <a href="https://github.com/Belacosaur/BELAC-Dock/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Belacosaur/BELAC-Dock/ci.yml?branch=main&amp;style=flat-square&amp;label=Windows%20build" alt="Windows checks"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-80d4b4?style=flat-square" alt="MIT license"></a>
 </p>
 
 <p align="center">
   <strong><a href="https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.0.0/BELAC.Dock-v1.0.0-win-x64.zip">Download for Windows 11 x64</a></strong>
+  · <a href="#quick-start">Quick start</a>
   · <a href="#screenshots">Screenshots</a>
   · <a href="https://github.com/Belacosaur/BELAC-Dock/releases/latest">Release notes</a>
   · <a href="https://github.com/Belacosaur/BELAC-Dock/issues">Report a bug</a>
 </p>
 
-A thin, floating taskbar for Windows 11, with local app shortcuts and LLM usage at the bottom.
+<p align="center">A slim, floating taskbar that keeps your Windows apps and AI usage within reach.</p>
 
-- Drag the top handle to move it; resize from the lower corner. Geometry survives restarts.
-- Six live colour themes: Mint, Ocean, Violet, Rose, Amber and Slate. Open **Settings → Appearance → Colour theme**. Menus and usage popouts follow the theme; Windows high contrast takes priority.
-- Click to launch, focus or minimize an app. Multiple windows open a window picker.
-- Drag executable files or Windows shortcuts onto the dock. Advanced right-click actions are under **More**.
-- Optional per-app **Dock-only** mode hides running taskbar buttons, with recovery and a configurable compatibility fallback.
-- Provider logos and usage rings use the local OpenTokenUsage service at `http://127.0.0.1:6736`. No provider credentials are required by the dock.
+## Quick start
 
-## Download
+1. **[Download the Windows ZIP](https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.0.0/BELAC.Dock-v1.0.0-win-x64.zip)** and extract the entire folder.
+2. Run **BELAC.Dock.exe** and choose your apps.
+3. Drag the top handle to position your dock. Pick a colour in **Settings → Appearance**.
 
-**[Download for Windows 11 x64](https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.0.0/BELAC.Dock-v1.0.0-win-x64.zip)** · [Release notes](https://github.com/Belacosaur/BELAC-Dock/releases/latest)
+**Windows 11 · x64 · Portable · .NET runtime included**  
+No installer or separate runtime is needed. The build is unsigned. Checksums are available on the [release page](https://github.com/Belacosaur/BELAC-Dock/releases/latest).
 
-Extract the entire ZIP and run `BELAC.Dock.exe`. This is a portable app with the .NET runtime included; no installer is required. The build is unsigned.
+## Made for your desktop
+
+| | |
+| :--- | :--- |
+| **A small footprint** | A thin floating bar with drag-to-move, resizing and remembered geometry. |
+| **Your apps, one click away** | Launch, focus and minimize apps, or choose between their open windows. Add executables and shortcuts by dragging them onto the dock. |
+| **Your colours** | Mint, Ocean, Violet, Rose, Amber and Slate, applied live across the dock, menus and popouts. |
+| **AI usage at a glance** | Provider logos, usage rings and compact details from your local OpenTokenUsage service. |
+| **Optional taskbar control** | Choose Mirror or Dock-only per app, with saved preferences and recovery across restarts. |
+| **Windows preferences respected** | High contrast and reduced motion are honoured automatically. |
 
 ## Screenshots
-
-Actual app screenshots; the header artwork is an AI-generated promotional illustration.
 
 <table>
   <tr><th>Floating taskbar</th><th>App actions</th></tr>
@@ -47,38 +53,53 @@ Actual app screenshots; the header artwork is an AI-generated promotional illust
   </tr>
 </table>
 
-## Requirements and running
+<sub>These are actual app screenshots. The header is an AI-generated promotional illustration based on the dock.</sub>
 
-Windows 11 x64. The portable release includes the .NET 10 runtime: unzip it and run `BELAC.Dock.exe`. The build is unsigned.
+## Everyday controls
 
-First launch offers monitor and application setup. The tray icon and `Ctrl+Alt+Shift+D` bring the dock back. Sign-in startup is opt-in.
+| Action | How |
+| :--- | :--- |
+| Add an app | Drop an `.exe` or `.lnk` onto the dock, or use **+**. |
+| Move or resize | Drag the top handle or the lower corner. |
+| Open app actions | Right-click an app; advanced options are under **More**. |
+| Change colours | **Settings → Appearance → Colour theme**. |
+| Bring the dock back | Use the tray icon or **Ctrl+Alt+Shift+D**. |
+| Start at sign-in | Enable it in Settings; it is off by default. |
 
-Settings, logs and recovery information live in `%LOCALAPPDATA%\BELAC\Dock`. `BELAC_DOCK_HOME` overrides this directory for isolated testing. Do not publish that directory or diagnostic exports: they can contain application paths and window information.
+## LLM usage
 
-## Build
+Usage rings read from a separate **OpenTokenUsage** service running on `http://127.0.0.1:6736`. The dock does not need provider API keys. If that service is unavailable, the dock still works as an app launcher.
 
-Install the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0), then run from the repository root:
+See the [usage integration guide](USAGE_INTEGRATION.md) for the local API contract.
+
+## Taskbar modes
+
+**Mirror** is the default: apps remain in the Windows taskbar. **Dock-only** attempts to hide their running taskbar buttons and reapplies that preference after app or dock restarts.
+
+- Pinned shortcuts stay pinned. The dock never unpins them.
+- The optional **Style compatibility** fallback can also remove an app from Alt+Tab.
+- Choose Mirror, pause separation or exit through the tray to restore managed windows.
+- Elevated/protected apps and some taskbar implementations may remain unsupported. Failed verification is reported rather than treated as success.
+
+Read the [compatibility notes](docs/COMPATIBILITY.md) for limitations and the [troubleshooting guide](docs/TROUBLESHOOTING.md) for recovery steps.
+
+## Build and contribute
+
+Use Windows and the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0):
 
 ```powershell
+git clone https://github.com/Belacosaur/BELAC-Dock.git
+cd BELAC-Dock
 .\scripts\build.ps1
 .\scripts\test.ps1
-.\scripts\test-ui.ps1
-.\scripts\publish.ps1
-.\scripts\source-release.ps1
 ```
 
-The publish script creates a self-contained Windows x64 zip in `dist`. The source script exports project sources, tests, docs and release files; local artifacts and configuration are excluded. Nothing is uploaded automatically. Both archives include the project license and third-party notices.
+Interactive checks: `scripts/test-ui.ps1`. Create portable and source packages with `scripts/publish.ps1` and `scripts/source-release.ps1`; outputs go to `dist` and are not uploaded automatically.
 
-## Dock-only behavior
+[Contributing](CONTRIBUTING.md) · [Architecture](ARCHITECTURE.md) · [Testing](docs/TESTING.md) · [Report a bug](https://github.com/Belacosaur/BELAC-Dock/issues)
 
-Mirror is the default. Dock-only is persisted per app and reapplied to new windows after app or dock restarts. The dock journals original state before modifying a window and verifies the running taskbar button using Windows UI Automation. Unsupported or unverifiable windows report an error rather than claiming success.
+## Privacy and license
 
-The optional **Style compatibility** setting can also remove an app from Alt+Tab. Disable it, choose Mirror, pause separation or exit the dock to restore managed windows. Pinned shortcuts remain pinned; unpin them yourself if you want no idle shortcut. Elevated/protected apps and some custom taskbars cannot be managed reliably. Support for every Windows app is not guaranteed.
+Settings, logs and recovery data stay in `%LOCALAPPDATA%\BELAC\Dock`. For isolated development, set `BELAC_DOCK_HOME` to a separate directory. Review diagnostic exports before sharing; they can contain local paths and window information. See [Security](SECURITY.md).
 
-The dock does not inject into or restart Explorer. An optional read-only Shell identity resolver uses a non-public interface, with documented identity/path fallbacks. See [compatibility](docs/COMPATIBILITY.md), [testing](docs/TESTING.md) and [troubleshooting](docs/TROUBLESHOOTING.md).
-
-## Development and release
-
-See [architecture](ARCHITECTURE.md), [contributing](CONTRIBUTING.md), [security](SECURITY.md), and [usage integration](USAGE_INTEGRATION.md).
-
-MIT licensed; see [LICENSE](LICENSE). Third-party provider marks retain their own license and trademark rights; see [third-party notices](THIRD_PARTY_NOTICES.md).
+Released under the [MIT license](LICENSE). Provider marks belong to their respective owners and do not imply endorsement. See [third-party notices](THIRD_PARTY_NOTICES.md).
