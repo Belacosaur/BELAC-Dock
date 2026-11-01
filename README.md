@@ -1,4 +1,19 @@
-# BELAC Dock
+<p align="center">
+  <img src="docs/media/belac-dock-banner.png" alt="BELAC Dock — Your apps. Your AI usage. One slim dock." width="100%">
+</p>
+
+<p align="center">
+  <a href="https://github.com/Belacosaur/BELAC-Dock/releases/latest"><img src="https://img.shields.io/github/v/release/Belacosaur/BELAC-Dock?style=flat-square&amp;color=80d4b4" alt="Latest release"></a>
+  <a href="https://github.com/Belacosaur/BELAC-Dock/actions/workflows/ci.yml"><img src="https://github.com/Belacosaur/BELAC-Dock/actions/workflows/ci.yml/badge.svg" alt="Windows checks"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-80d4b4?style=flat-square" alt="MIT license"></a>
+</p>
+
+<p align="center">
+  <strong><a href="https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.0.0/BELAC.Dock-v1.0.0-win-x64.zip">Download for Windows 11 x64</a></strong>
+  · <a href="#screenshots">Screenshots</a>
+  · <a href="https://github.com/Belacosaur/BELAC-Dock/releases/latest">Release notes</a>
+  · <a href="https://github.com/Belacosaur/BELAC-Dock/issues">Report a bug</a>
+</p>
 
 A thin, floating taskbar for Windows 11, with local app shortcuts and LLM usage at the bottom.
 
@@ -11,24 +26,24 @@ A thin, floating taskbar for Windows 11, with local app shortcuts and LLM usage 
 
 ## Download
 
-**[Download for Windows 11 x64](https://github.com/Belacosaur/BELAC-Dock/releases/latest/download/BELAC.Dock-v1.0.0-win-x64.zip)** · [Release notes](https://github.com/Belacosaur/BELAC-Dock/releases/latest)
+**[Download for Windows 11 x64](https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.0.0/BELAC.Dock-v1.0.0-win-x64.zip)** · [Release notes](https://github.com/Belacosaur/BELAC-Dock/releases/latest)
 
 Extract the entire ZIP and run `BELAC.Dock.exe`. This is a portable app with the .NET runtime included; no installer is required. The build is unsigned.
 
 ## Screenshots
 
+Actual app screenshots; the header artwork is an AI-generated promotional illustration.
+
 <table>
-  <tr>
-    <th>Floating taskbar</th>
-    <th>App actions</th>
-    <th>Codex usage</th>
-    <th>Cursor usage</th>
-  </tr>
+  <tr><th>Floating taskbar</th><th>App actions</th></tr>
   <tr>
     <td align="center"><img src="docs/screenshots/dock.png" alt="Thin floating dock with app shortcuts and LLM rings" height="420"></td>
     <td align="center"><img src="docs/screenshots/app-menu.png" alt="App context menu with window actions" height="420"></td>
-    <td align="center"><img src="docs/screenshots/codex-usage.png" alt="Codex usage popout with weekly quota and usage details" height="420"></td>
-    <td align="center"><img src="docs/screenshots/cursor-usage.png" alt="Cursor usage popout with quota progress bars" height="420"></td>
+  </tr>
+  <tr><th>Codex usage</th><th>Cursor usage</th></tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/codex-usage.png" alt="Codex usage popout with weekly quota and usage details" width="340"></td>
+    <td align="center"><img src="docs/screenshots/cursor-usage.png" alt="Cursor usage popout with quota progress bars" width="340"></td>
   </tr>
 </table>
 
