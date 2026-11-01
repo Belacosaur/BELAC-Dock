@@ -35,7 +35,7 @@ public class NativeUsageTests
     {
         using var handler = new Handler(r => { Assert.Equal("chatgpt.com", r.RequestUri!.Host); Assert.Equal("fixture", r.Headers.Authorization!.Parameter); return Json(Codex); });
         var fallback = new Fallback();
-        using var source = new NativeUsageSource(() => new() { NativeProviders = ["codex"] }, new Credentials(), handler, fallback);
+        using var source = new NativeUsageSource(() => new() { IncludeWslCodex = false, NativeProviders = ["codex"] }, new Credentials(), handler, fallback);
         var result = await source.GetSnapshotAsync(default);
         Assert.Equal(2, result.Providers[0].Metrics.Count);
         Assert.Equal(0, fallback.Calls);
@@ -56,7 +56,7 @@ public class NativeUsageTests
     {
         var credentials = new Credentials();
         using var handler = new Handler(_ => Json(Codex));
-        using var source = new NativeUsageSource(() => new() { NativeProviders = ["codex"] }, credentials, handler);
+        using var source = new NativeUsageSource(() => new() { IncludeWslCodex = false, NativeProviders = ["codex"] }, credentials, handler);
         await source.GetSnapshotAsync(default);
         credentials.Value = new() { AccessToken = "second-account" };
         await source.GetSnapshotAsync(default);
@@ -68,7 +68,7 @@ public class NativeUsageTests
         var time = DateTimeOffset.UtcNow;
         var calls = 0;
         using var handler = new Handler(_ => { if (++calls == 1) return Json(Codex); var response = new HttpResponseMessage((HttpStatusCode)429); response.Headers.RetryAfter = new(TimeSpan.FromHours(1)); return response; });
-        using var source = new NativeUsageSource(() => new() { NativeProviders = ["codex"] }, new Credentials(), handler, clock: () => time);
+        using var source = new NativeUsageSource(() => new() { IncludeWslCodex = false, NativeProviders = ["codex"] }, new Credentials(), handler, clock: () => time);
         await source.GetSnapshotAsync(default);
         time = time.AddMinutes(3);
         var stale = await source.GetSnapshotAsync(default);
@@ -83,7 +83,7 @@ public class NativeUsageTests
     public async Task Failures_are_actionable_without_exposing_response_or_token(int status)
     {
         using var handler = new Handler(_ => new((HttpStatusCode)status) { Content = new StringContent("SECRET_RESPONSE") });
-        using var source = new NativeUsageSource(() => new() { NativeProviders = ["codex"] }, new Credentials(), handler);
+        using var source = new NativeUsageSource(() => new() { IncludeWslCodex = false, NativeProviders = ["codex"] }, new Credentials(), handler);
         var error = (await source.GetSnapshotAsync(default)).Providers[0].Error!;
         Assert.DoesNotContain("SECRET", error);
         Assert.DoesNotContain("fixture", error);
@@ -99,6 +99,54 @@ public class NativeUsageTests
     }
     private static HttpResponseMessage Json(string body) => new(HttpStatusCode.OK) { Content = new StringContent(body) };
     [Fact]
+    public async Task Wsl_and_windows_accounts_have_separate_ids_and_caches()
+    {
+        using var handler = new Handler(_ => Json(Codex));
+        var wsl = new WslCredentials();
+        using var source = new NativeUsageSource(() => new() { NativeProviders = ["codex"] }, new Credentials(), handler, wsl: wsl);
+        var result = await source.GetSnapshotAsync(default);
+        Assert.Equal(new[] { "codex", "codex-wsl-fixture" }, result.Providers.Select(p => p.Id));
+        Assert.Contains("WSL", result.Providers[1].DisplayName);
+        Assert.Equal(2, handler.Calls);
+        await source.GetSnapshotAsync(default);
+        Assert.Equal(2, handler.Calls);
+        wsl.Accounts = [];
+        var stopped = await source.GetSnapshotAsync(default);
+        Assert.True(stopped.Providers[1].IsStale);
+        Assert.False(stopped.Providers[0].IsStale);
+        Assert.Equal(2, handler.Calls);
+    }
+    [Fact]
+    public async Task Wsl_can_be_disabled_without_reading_its_credentials()
+    {
+        using var handler = new Handler(_ => Json(Codex));
+        var wsl = new WslCredentials();
+        using var source = new NativeUsageSource(() => new() { NativeProviders = ["codex"], IncludeWslCodex = false }, new Credentials(), handler, wsl: wsl);
+        Assert.Single((await source.GetSnapshotAsync(default)).Providers);
+        Assert.Equal(0, wsl.Calls);
+    }
+    [Fact]
+    public async Task Wsl_failure_does_not_break_windows_usage()
+    {
+        using var handler = new Handler(_ => Json(Codex));
+        using var source = new NativeUsageSource(() => new() { NativeProviders = ["codex"] }, new Credentials(), handler, wsl: new WslCredentials { Fail = true });
+        var result = await source.GetSnapshotAsync(default);
+        Assert.Single(result.Providers);
+        Assert.Null(result.Providers[0].Error);
+    }
+    private sealed class WslCredentials : IWslCodexCredentials
+    {
+        public int Calls;
+        public bool Fail;
+        public IReadOnlyList<WslCodexAccount> Accounts = [new("codex-wsl-fixture", "Codex · WSL (Fixture)", new() { AccessToken = "wsl-fixture" })];
+        public Task<IReadOnlyList<WslCodexAccount>> ReadAsync(CancellationToken token)
+        {
+            Calls++;
+            if (Fail) throw new IOException("WSL unavailable");
+            return Task.FromResult(Accounts);
+        }
+    }
+    [Fact]
     public async Task Fallback_is_called_only_when_explicitly_enabled()
     {
         var fallback = new Fallback();
@@ -110,7 +158,7 @@ public class NativeUsageTests
     public async Task Oversized_provider_response_is_rejected()
     {
         using var handler = new Handler(_ => Json(new string('x', 1024 * 1024 + 1)));
-        using var source = new NativeUsageSource(() => new() { NativeProviders = ["codex"] }, new Credentials(), handler);
+        using var source = new NativeUsageSource(() => new() { IncludeWslCodex = false, NativeProviders = ["codex"] }, new Credentials(), handler);
         var result = await source.GetSnapshotAsync(default);
         Assert.Empty(result.Providers[0].Metrics);
         Assert.NotNull(result.Providers[0].Error);

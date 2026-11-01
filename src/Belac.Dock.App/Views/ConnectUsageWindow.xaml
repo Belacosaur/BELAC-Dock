@@ -21,6 +21,7 @@
      <TextBlock Style="{StaticResource BodyText}" Margin="0,12,0,18" Text="Connect directly using the accounts you already use on this PC. No companion app is required."/>
      <Border Style="{StaticResource WorkspaceCard}" Padding="16"><StackPanel>
       <CheckBox x:Name="CodexBox" Content="Codex — ChatGPT account" Margin="0,6"/>
+      <CheckBox x:Name="WslBox" Content="Include Codex in running WSL distributions" Margin="20,6,0,6"/>
       <CheckBox x:Name="ClaudeBox" Content="Claude — Claude Code account" Margin="0,6"/>
       <CheckBox x:Name="CursorBox" Content="Cursor — desktop account" Margin="0,6"/>
      </StackPanel></Border>
@@ -42,7 +43,7 @@
       <ComboBoxItem Content="Codex" Tag="codex"/><ComboBoxItem Content="Claude" Tag="claude"/><ComboBoxItem Content="Cursor" Tag="cursor"/>
      </ComboBox>
      <Button Style="{StaticResource TextButton}" Content="Open official provider page" HorizontalAlignment="Left" Margin="0,8,0,0" Click="ProviderHelp_Click"/>
-     <TextBlock Style="{StaticResource MutedText}" Margin="0,16,0,0" Text="If a session expires, open that app to renew it and check again. No passwords or tokens to paste here. WSL-only accounts are not detected in this version."/>
+     <TextBlock Style="{StaticResource MutedText}" Margin="0,16,0,0" Text="If a session expires, open that app to renew it and check again. No passwords or tokens to paste here. Codex accounts in running WSL distributions are detected separately. Stopped distributions are left alone."/>
     </StackPanel>
     <StackPanel x:Name="CheckStep" Visibility="Collapsed">
      <TextBlock Text="3. Check your connection" FontSize="19" FontWeight="SemiBold"/>

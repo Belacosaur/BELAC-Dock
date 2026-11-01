@@ -11,6 +11,8 @@ namespace Belac.Dock.Infrastructure;
 public sealed class NativeUsageSource : IUsageProviderSource, IDisposable
 {
     private readonly HttpClient _http;
+    private readonly IWslCodexCredentials _wsl;
+    private readonly Dictionary<string, string> _wslNames = new();
     private readonly INativeUsageCredentials _credentials;
     private readonly Func<UsageSettings> _settings;
     private readonly IUsageProviderSource _fallback;
@@ -19,9 +21,10 @@ public sealed class NativeUsageSource : IUsageProviderSource, IDisposable
     private readonly SemaphoreSlim _gate = new(1);
     private readonly Dictionary<string, (string Fingerprint, ProviderUsage Reading, DateTimeOffset Next)> _cache = new();
     public NativeUsageSource(Func<UsageSettings> settings, INativeUsageCredentials? credentials = null, HttpMessageHandler? handler = null,
-        IUsageProviderSource? fallback = null, Func<DateTimeOffset>? clock = null)
+        IUsageProviderSource? fallback = null, Func<DateTimeOffset>? clock = null, IWslCodexCredentials? wsl = null)
     {
         _settings = settings;
+        _wsl = wsl ?? new WslCodexCredentials();
         _credentials = credentials ?? new NativeUsageCredentials();
         _http = handler is null ? new(new SocketsHttpHandler { AllowAutoRedirect = false, ConnectTimeout = TimeSpan.FromSeconds(5) }) : new(handler, false);
         _http.Timeout = TimeSpan.FromSeconds(12);
@@ -40,6 +43,25 @@ public sealed class NativeUsageSource : IUsageProviderSource, IDisposable
             // Serialize provider requests to keep credentials and cache isolated; never block the UI thread.
             var providers = new List<ProviderUsage>();
             foreach (var id in selected) providers.Add(await FetchAsync(id, token).ConfigureAwait(false));
+            if (selected.Contains("codex") && settings.IncludeWslCodex)
+            {
+                var seen = new HashSet<string>();
+                try
+                {
+                    foreach (var account in await _wsl.ReadAsync(token).ConfigureAwait(false))
+                    {
+                        seen.Add(account.Id);
+                        _wslNames[account.Id] = account.DisplayName;
+                        var row = await FetchAsync("codex", token, account.Id, account.Credential).ConfigureAwait(false);
+                        providers.Add(row with { Id = account.Id, DisplayName = account.DisplayName });
+                    }
+                }
+                catch (OperationCanceledException) when (token.IsCancellationRequested) { throw; }
+                catch (Exception) { /* WSL unavailable must not break Windows providers. */ }
+                foreach (var entry in _wslNames.Where(p => !seen.Contains(p.Key)))
+                    if (_cache.TryGetValue(entry.Key, out var cached))
+                        providers.Add(cached.Reading with { Id = entry.Key, DisplayName = entry.Value, IsStale = true, Error = "WSL is stopped or unavailable. Open the distribution to resume updates." });
+            }
             if (settings.CompanionFallback)
             {
                 var other = await _fallback.GetSnapshotAsync(token).ConfigureAwait(false);
@@ -55,21 +77,22 @@ public sealed class NativeUsageSource : IUsageProviderSource, IDisposable
         }
         finally { _gate.Release(); }
     }
-    private async Task<ProviderUsage> FetchAsync(string id, CancellationToken token)
+    private async Task<ProviderUsage> FetchAsync(string id, CancellationToken token, string? accountKey = null, NativeUsageCredential? suppliedCredential = null)
     {
+        var cacheKey = accountKey ?? id;
         var now = _clock();
         ProviderUsage Failure(string error) => new(id, NativeUsageParser.Name(id), null, [], null, false, error);
         NativeUsageCredential? credential;
-        try { credential = await _credentials.ReadAsync(id, token).ConfigureAwait(false); }
+        try { credential = accountKey is not null ? suppliedCredential : await _credentials.ReadAsync(id, token).ConfigureAwait(false); }
         catch (OperationCanceledException) when (token.IsCancellationRequested) { throw; }
-        catch (Exception) { _cache.Remove(id); return Failure("Couldn't read this app's sign-in. Open the app, sign in, then check again."); }
+        catch (Exception) { _cache.Remove(cacheKey); return Failure("Couldn't read this app's sign-in. Open the app, sign in, then check again."); }
         if (credential is null)
         {
-            _cache.Remove(id);
-            return Failure(id == "claude" ? "Sign in to Claude Code on Windows, then check again." : $"Sign in to {NativeUsageParser.Name(id)} on Windows, then check again. A website login alone is not enough.");
+            _cache.Remove(cacheKey);
+            return Failure(accountKey is not null ? "Sign in to Codex inside this WSL distribution, then check again." : id == "claude" ? "Sign in to Claude Code on Windows, then check again." : $"Sign in to {NativeUsageParser.Name(id)} on Windows, then check again. A website login alone is not enough.");
         }
         var fingerprint = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(credential.AccessToken + "\n" + credential.AccountId)));
-        var hasPrevious = _cache.TryGetValue(id, out var previous) && previous.Fingerprint == fingerprint;
+        var hasPrevious = _cache.TryGetValue(cacheKey, out var previous) && previous.Fingerprint == fingerprint;
         if (hasPrevious && now < previous.Next) return previous.Reading;
         var next = now.AddMinutes(id == "claude" ? 5 : 2);
         ProviderUsage result;
@@ -121,7 +144,7 @@ public sealed class NativeUsageSource : IUsageProviderSource, IDisposable
         // Retain same-account data as visibly stale, never reuse a different account's reading.
         if (result.Error is not null && hasPrevious && previous.Reading.Metrics.Count > 0)
             result = previous.Reading with { IsStale = true, Error = result.Error };
-        _cache[id] = (fingerprint, result, next);
+        _cache[cacheKey] = (fingerprint, result, next);
         return result;
     }
     public void Dispose() { _http.Dispose(); if (_ownsFallback && _fallback is IDisposable d) d.Dispose(); }

@@ -27,7 +27,8 @@ A website login alone is not enough. There is no password, API key or token to p
 - Codex: `%USERPROFILE%\.codex\auth.json`, or the directory specified by `CODEX_HOME`. The legacy `.config\codex` directory is also checked. API-key-only, keyring-only and memory-only authentication are not supported yet. Do not weaken credential storage just to connect the dock; use the optional fallback if it supports your setup.
 - Claude Code: `%USERPROFILE%\.claude\.credentials.json`, or the directory specified by `CLAUDE_CONFIG_DIR`.
 - Cursor: `%APPDATA%\Cursor\User\globalStorage\state.vscdb`, opened read-only. Cursor can remain open.
-- WSL-only accounts, additional accounts and custom Cursor profiles are not detected in this version.
+- Codex in running WSL distributions is detected as a separate **Codex · WSL (distribution)** entry. Leave **Include Codex in running WSL distributions** enabled in setup. The default WSL user’s `.codex/auth.json` or `.config/codex/auth.json` is read; `CODEX_HOME` is honored when available to the non-login WSL process. Custom shell-only environment settings, keyring-only WSL sessions, additional users, WSL Claude and custom Cursor profiles are not detected.
+- The dock queries running distributions only and excludes Docker’s internal distributions. It does not intentionally start stopped distributions. A previously fetched WSL reading stays marked stale while its distribution is unavailable.
 
 The dock never modifies these files or rotates refresh tokens. If a session expires, open the provider app to renew the sign-in. The next check reads updated credentials automatically.
 
@@ -39,7 +40,7 @@ An unavailable provider does not stop others working. Previous readings are mark
 
 | What you see | What to do |
 | --- | --- |
-| Sign in to the provider | Open its Windows app and sign in. Browser-only and WSL-only sessions are not detected. |
+| Sign in to the provider | Open its Windows app and sign in. Browser-only sessions are not detected. For WSL Codex, start its distribution and sign in there. |
 | Sign-in expired or access denied | Open the provider app and renew sign-in. Some accounts may not have access to usage. |
 | Couldn't read sign-in | Let the app finish signing in, then retry. Use the same Windows user. |
 | Rate limit reached | Wait until the displayed retry time. Other monitors share your provider's limits. |

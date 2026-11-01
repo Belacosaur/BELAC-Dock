@@ -59,6 +59,7 @@ public sealed class DockGroup
 public sealed class UsageSettings
 {
     public List<string> NativeProviders { get; set; } = ["codex", "claude", "cursor"];
+    public bool IncludeWslCodex { get; set; } = true;
     public bool CompanionFallback { get; set; }
     public bool Enabled { get; set; } = true;
     public bool AutoHideOnShortDisplay { get; set; } = true;

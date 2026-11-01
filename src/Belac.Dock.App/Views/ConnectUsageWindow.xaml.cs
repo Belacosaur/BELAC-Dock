@@ -26,6 +26,7 @@ public partial class ConnectUsageWindow : Window
         CodexBox.IsChecked = (host.Session.Current.Usage.NativeProviders ?? []).Contains("codex");
         ClaudeBox.IsChecked = (host.Session.Current.Usage.NativeProviders ?? []).Contains("claude");
         CursorBox.IsChecked = (host.Session.Current.Usage.NativeProviders ?? []).Contains("cursor");
+        WslBox.IsChecked = host.Session.Current.Usage.IncludeWslCodex;
         FallbackBox.IsChecked = host.Session.Current.Usage.CompanionFallback;
         Closed += (_, _) => { _closed.Cancel();  };
     }
@@ -43,12 +44,14 @@ public partial class ConnectUsageWindow : Window
     private async void Next_Click(object sender, RoutedEventArgs e)
     {
         _selection.NativeProviders = new[] { ("codex", CodexBox.IsChecked), ("claude", ClaudeBox.IsChecked), ("cursor", CursorBox.IsChecked) }.Where(p => p.Item2 == true).Select(p => p.Item1).ToList();
+        _selection.IncludeWslCodex = WslBox.IsChecked == true;
         _selection.CompanionFallback = FallbackBox.IsChecked == true;
         if (_step < 2) { _step++; ShowStep(); if (_step == 2) await CheckAsync(); return; }
         if (_snapshot is null || !UsageSetupStatus.From(_snapshot, true, true).CanFinish) return;
         try
         {
             _host.Session.Current.Usage.NativeProviders = _selection.NativeProviders;
+            _host.Session.Current.Usage.IncludeWslCodex = _selection.IncludeWslCodex;
             _host.Session.Current.Usage.CompanionFallback = _selection.CompanionFallback;
             _host.Session.Current.Usage.Enabled = true;
             var ids = _snapshot.Providers.Where(UsageSetupStatus.HasReading).Select(p => p.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -66,6 +69,7 @@ public partial class ConnectUsageWindow : Window
         try
         {
             _host.Session.Current.Usage.NativeProviders = new[] { ("codex", CodexBox.IsChecked), ("claude", ClaudeBox.IsChecked), ("cursor", CursorBox.IsChecked) }.Where(p => p.Item2 == true).Select(p => p.Item1).ToList();
+            _host.Session.Current.Usage.IncludeWslCodex = WslBox.IsChecked == true;
             _host.Session.Current.Usage.CompanionFallback = FallbackBox.IsChecked == true;
             _host.Session.Save();
             _host.RestartUsage();

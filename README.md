@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <strong><a href="https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.2.0/BELAC.Dock-v1.2.0-win-x64.zip">Download for Windows 11 x64</a></strong>
+  <strong><a href="https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.2.1/BELAC.Dock-v1.2.1-win-x64.zip">Download for Windows 11 x64</a></strong>
   · <a href="#quick-start">Quick start</a>
   · <a href="#screenshots">Screenshots</a>
   · <a href="https://github.com/Belacosaur/BELAC-Dock/releases/latest">Release notes</a>
@@ -20,7 +20,7 @@
 
 ## Quick start
 
-1. **[Download the Windows ZIP](https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.2.0/BELAC.Dock-v1.2.0-win-x64.zip)** and extract the entire folder.
+1. **[Download the Windows ZIP](https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.2.1/BELAC.Dock-v1.2.1-win-x64.zip)** and extract the entire folder.
 2. Run **BELAC.Dock.exe** and choose your apps.
 3. Drag the top handle to position your dock. Pick a colour in **Settings → Appearance**.
 
@@ -70,7 +70,7 @@ No installer or separate runtime is needed. The build is unsigned. Checksums are
 
 Open **Settings → Usage → Connect AI usage** for a three-step walkthrough:
 
-1. Choose Codex, Claude and/or Cursor. No companion app is required.
+1. Choose Codex, Claude and/or Cursor. Codex accounts in running WSL distributions are included as separate entries. No companion app is required.
 2. Sign in to the provider apps on Windows, or use your existing supported sign-ins.
 3. Check the connection and choose **Show readings on dock**.
 
