@@ -99,6 +99,59 @@ public class NativeUsageTests
     }
     private static HttpResponseMessage Json(string body) => new(HttpStatusCode.OK) { Content = new StringContent(body) };
     [Fact]
+    public async Task Cursor_reconnects_from_saved_credentials_after_dock_restart()
+    {
+        var credentials = new Credentials { Value = new() { AccessToken = "saved-cursor-session" } };
+        using var handler = new Handler(request =>
+        {
+            Assert.Equal("saved-cursor-session", request.Headers.Authorization!.Parameter);
+            return Json("{\"planUsage\":{\"totalPercentUsed\":35}}");
+        });
+        for (var restart = 0; restart < 2; restart++)
+        {
+            using var source = new NativeUsageSource(() => new() { NativeProviders = ["cursor"] }, credentials, handler);
+            Assert.Null((await source.GetSnapshotAsync(default)).Providers[0].Error);
+        }
+        Assert.Equal(2, handler.Calls);
+    }
+
+    [Fact]
+    public async Task Cursor_rotated_credentials_bypass_old_cached_auth_failure_automatically()
+    {
+        var credentials = new Credentials { Value = new() { AccessToken = "expired" } };
+        using var handler = new Handler(request => request.Headers.Authorization!.Parameter == "new-session"
+            ? Json("{\"planUsage\":{\"totalPercentUsed\":35}}") : new(HttpStatusCode.Unauthorized));
+        using var source = new NativeUsageSource(() => new() { NativeProviders = ["cursor"] }, credentials, handler);
+        Assert.NotNull((await source.GetSnapshotAsync(default)).Providers[0].Error);
+        credentials.Value = new() { AccessToken = "new-session" };
+        Assert.Null((await source.GetSnapshotAsync(default)).Providers[0].Error);
+        Assert.Equal(2, handler.Calls);
+    }
+
+    [Fact]
+    public async Task Cursor_temporary_restart_read_failure_recovers_on_next_poll()
+    {
+        var credentials = new RestartingCredentials();
+        using var handler = new Handler(_ => Json("{\"planUsage\":{\"totalPercentUsed\":35}}"));
+        using var source = new NativeUsageSource(() => new() { NativeProviders = ["cursor"] }, credentials, handler);
+        Assert.Null((await source.GetSnapshotAsync(default)).Providers[0].Error);
+        credentials.Restarting = true;
+        Assert.NotNull((await source.GetSnapshotAsync(default)).Providers[0].Error);
+        credentials.Restarting = false;
+        Assert.Null((await source.GetSnapshotAsync(default)).Providers[0].Error);
+        Assert.Equal(2, handler.Calls);
+    }
+
+    private sealed class RestartingCredentials : INativeUsageCredentials
+    {
+        public bool Restarting;
+        public Task<NativeUsageCredential?> ReadAsync(string provider, CancellationToken token)
+        {
+            if (Restarting) throw new IOException("Temporary provider restart");
+            return Task.FromResult<NativeUsageCredential?>(new() { AccessToken = "saved-session" });
+        }
+    }
+    [Fact]
     public async Task Cursor_renews_once_after_401_and_reconnect_reuses_the_renewed_session()
     {
         var credentials = new Credentials { Value = new() { AccessToken = "old", RefreshToken = "refresh-fixture" } };
