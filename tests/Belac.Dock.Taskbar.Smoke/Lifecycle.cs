@@ -70,6 +70,38 @@ internal static class Lifecycle
                 return results.Length>0 && results.All(r=>r.Status==TaskbarStatus.DockOnly);
             }, "All app windows reach verified Dock-only");
         }
+        void ExerciseMinimize(WindowObservation window)
+        {
+            var h = new IntPtr(window.Hwnd);
+            NativeMethods.GetWindowRect(h, out var before);
+            var controller = new WindowController();
+            for (var cycle = 0; cycle < 3; cycle++)
+            {
+                var expected = before;
+                if (cycle == 2)
+                {
+                    NativeMethods.ShowWindowAsync(h, 3);
+                    Wait(() => IsZoomed(h), "Fixture maximized before minimizing");
+                    NativeMethods.GetWindowRect(h, out expected);
+                }
+                if (cycle == 1) NativeMethods.PostMessage(h, 0x0112, new IntPtr(0xF020), IntPtr.Zero); // app caption/system-menu minimize
+                else controller.TryMinimize(window.Hwnd);
+                Wait(() => NativeMethods.IsIconic(h), "Fixture enters native minimized state");
+                service.ParkMinimizedWindow(window);
+                Check(NativeMethods.IsIconic(h) && NativeMethods.IsWindowVisible(h), "Minimized app remains tracked and restorable");
+                NativeMethods.GetWindowRect(h, out var minimized);
+                Check(new MonitorCatalog().GetMonitors().All(m => minimized.Right <= m.Bounds.Left || minimized.Left >= m.Bounds.Right || minimized.Bottom <= m.Bounds.Top || minimized.Top >= m.Bounds.Bottom), "No minimized title bar appears on any monitor");
+                Check(Probe(window) is TaskbarProbeResult.Absent or TaskbarProbeResult.PinnedOnly, "Minimized app has no running Windows taskbar button");
+                controller.TryActivate(window.Hwnd);
+                Wait(() => !NativeMethods.IsIconic(h), "Dock activation restores minimized app");
+                NativeMethods.GetWindowRect(h, out var restored);
+                Check(restored.Left == expected.Left && restored.Top == expected.Top && restored.Right == expected.Right && restored.Bottom == expected.Bottom, "Restore preserves original window bounds");
+                if (cycle == 2) Check(IsZoomed(h), "Restore preserves maximized state");
+                // Native restore may recreate the button; reconcile just like the dock host.
+                var app = apps.Single(a => Belac.Dock.Core.Matching.AppMatcher.Match([a], window).App is not null);
+                HideAll((app, new List<WindowObservation>{window}));
+            }
+        }
         try
         {
             var first=Start(a.DisplayName,"BELAC.Test."+Guid.NewGuid().ToString("N"),2);
@@ -81,6 +113,7 @@ internal static class Lifecycle
             HideAll((a,first.Windows),(b,second.Windows));
             Check(service.Snapshots.Count==3,"Tracks every window across both app groups");
             Check(Probe(first.Windows[0])==TaskbarProbeResult.Absent && Probe(second.Windows[0])==TaskbarProbeResult.Absent,"Both taskbar groups hidden");
+            ExerciseMinimize(first.Windows[0]);
             service.Dispose();service=new TaskbarSeparationService(store,inspector);
             service.Reconcile(apps);
             HideAll((a,first.Windows),(b,second.Windows));
@@ -110,6 +143,7 @@ internal static class Lifecycle
             var originalStyle=NativeMethods.ReadExStyle(new IntPtr(resistant.Windows[0].Hwnd));
             HideAll((c,resistant.Windows));
             Check(service.Snapshots.Single().Method=="ExStyle","Configured fallback handles an app that recreates its taskbar button");
+            ExerciseMinimize(resistant.Windows[0]);
             service.Dispose();service=new TaskbarSeparationService(store,inspector);service.Reconcile(apps);
             HideAll((c,resistant.Windows));
             Check((NativeMethods.ReadExStyle(new IntPtr(resistant.Windows[0].Hwnd))&NativeMethods.WsExToolWindow)!=0,"Fallback remains active after dock restart");
@@ -135,6 +169,7 @@ internal static class Lifecycle
         throw new TimeoutException(label);
     }
     private static void Check(bool ok,string label){if(!ok)throw new Exception(label);Console.WriteLine("PASS "+label);}
+    [DllImport("user32.dll")] private static extern bool IsZoomed(IntPtr hwnd);
 
     // Fixture-only setter: production code only reads the property.
     [StructLayout(LayoutKind.Sequential)] private struct Key { public Guid Format;public uint Id; }

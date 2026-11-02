@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <strong><a href="https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.2.1/BELAC.Dock-v1.2.1-win-x64.zip">Download for Windows 11 x64</a></strong>
+  <strong><a href="https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.2.2/BELAC.Dock-v1.2.2-win-x64.zip">Download for Windows 11 x64</a></strong>
   · <a href="#quick-start">Quick start</a>
   · <a href="#screenshots">Screenshots</a>
   · <a href="https://github.com/Belacosaur/BELAC-Dock/releases/latest">Release notes</a>
@@ -20,7 +20,7 @@
 
 ## Quick start
 
-1. **[Download the Windows ZIP](https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.2.1/BELAC.Dock-v1.2.1-win-x64.zip)** and extract the entire folder.
+1. **[Download the Windows ZIP](https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.2.2/BELAC.Dock-v1.2.2-win-x64.zip)** and extract the entire folder.
 2. Run **BELAC.Dock.exe** and choose your apps.
 3. Drag the top handle to position your dock. Pick a colour in **Settings → Appearance**.
 
@@ -82,6 +82,7 @@ The dock reads supported local sign-ins and fetches usage directly. Tokens stay 
 
 **Mirror** is the default: apps remain in the Windows taskbar. **Dock-only** attempts to hide their running taskbar buttons and reapplies that preference after app or dock restarts.
 
+- Dock-only apps stay out of view when minimised and restore from the dock, preserving their normal or maximised size.
 - Pinned shortcuts stay pinned. The dock never unpins them.
 - The optional **Style compatibility** fallback can also remove an app from Alt+Tab.
 - Choose Mirror, pause separation or exit through the tray to restore managed windows.

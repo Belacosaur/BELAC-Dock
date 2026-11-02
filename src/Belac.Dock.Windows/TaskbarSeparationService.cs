@@ -117,6 +117,7 @@ public sealed class TaskbarSeparationService : ITaskbarSeparationService, IDispo
         var entry = _entries.FirstOrDefault(candidate => JournalValidator.IsSameWindow(candidate, live));
         if (entry is not null)
         {
+            ParkMinimizedWindow(live);
             if (_verified.TryGetValue(key, out var checkedAt) && now - checkedAt < TimeSpan.FromSeconds(3) && _verifiedResults.TryGetValue(key, out var confirmed))
                 return Finish(confirmed.Status, confirmed.Detail, confirmed.ChangedStyle);
             var probe = TaskbarButtonProbe.LookForWindow(live);
@@ -171,7 +172,10 @@ public sealed class TaskbarSeparationService : ITaskbarSeparationService, IDispo
             return Finish(TaskbarStatus.Error, "Could not write the recovery journal. The window was not changed.", false);
         _attemptStarted[key] = now;
         if (TryDeleteTab(hwnd))
+        {
+            ParkMinimizedWindow(live);
             return Finish(TaskbarStatus.Unknown, "Hiding taskbar button; waiting for verification…", false);
+        }
         if (app.AllowStyleCompatibility && Remember(live, originalStyle, "ExStyle") && ApplyToolStyle(hwnd, originalStyle, live.IsMinimized))
             return Finish(TaskbarStatus.Unknown, "Verifying compatibility fallback; Alt+Tab is hidden too…", true);
         if (!RollBack(live)) return Finish(TaskbarStatus.Error, "Taskbar API failed and restoration could not be confirmed. Recovery information was retained.", false);
@@ -187,6 +191,37 @@ public sealed class TaskbarSeparationService : ITaskbarSeparationService, IDispo
         var restored = RestoreOne(window);
         _failures[key] = failures;
         return restored;
+    }
+
+    // Windows normally parks taskbar-managed minimized windows outside the desktop.
+    // DeleteTab / TOOLWINDOW can leave a legacy caption at the bottom left instead.
+    // Move only that iconic representation; do not hide the HWND or change its restore bounds.
+    public void ParkMinimizedWindow(WindowObservation window)
+    {
+        if (IsPaused || !_entries.Any(entry => JournalValidator.IsSameWindow(entry, window))) return;
+        var hwnd = new IntPtr(window.Hwnd);
+        if (!NativeMethods.IsIconic(hwnd) || !_inspector.TryInspect(window.Hwnd, out var live)
+            || !JournalValidator.IsSameWindow(ToSnapshot(window, 0, "Check"), live)) return;
+        if (!NativeMethods.GetWindowRect(hwnd, out var rect)) return;
+        var monitors = new MonitorCatalog().GetMonitors();
+        if (!monitors.Any(m => rect.Left < m.Bounds.Right && rect.Right > m.Bounds.Left && rect.Top < m.Bounds.Bottom && rect.Bottom > m.Bounds.Top)) return;
+        var left = (int)Math.Min(-32000, monitors.Min(m => m.Bounds.Left) - Math.Max(1000, rect.Right - rect.Left + 100));
+        var top = (int)Math.Min(-32000, monitors.Min(m => m.Bounds.Top) - Math.Max(1000, rect.Bottom - rect.Top + 100));
+        if (NativeMethods.IsIconic(hwnd))
+            NativeMethods.SetWindowPos(hwnd, IntPtr.Zero, left, top, 0, 0,
+                NativeMethods.SwpNoSize | NativeMethods.SwpNoZOrder | NativeMethods.SwpNoActivate);
+    }
+
+    public void OnMinimizeStateChanged(WindowObservation window)
+    {
+        if (IsPaused || !_entries.Any(entry => JournalValidator.IsSameWindow(entry, window))) return;
+        if (window.IsMinimized) ParkMinimizedWindow(window);
+        else
+        {
+            // Restoring can cause Explorer to recreate the taskbar button.
+            TryDeleteTab(new IntPtr(window.Hwnd));
+            _verified.Remove(Identity(window));
+        }
     }
 
     public bool RestoreOne(WindowObservation window)
@@ -278,6 +313,7 @@ public sealed class TaskbarSeparationService : ITaskbarSeparationService, IDispo
         NativeMethods.SetWindowPos(hwnd, IntPtr.Zero, 0, 0, 0, 0,
             NativeMethods.SwpNoMove | NativeMethods.SwpNoSize | NativeMethods.SwpNoZOrder | NativeMethods.SwpNoActivate | NativeMethods.SwpFrameChanged);
         NativeMethods.ShowWindow(hwnd, minimized ? NativeMethods.SwShowMinNoActive : NativeMethods.SwShowNa);
+        if (minimized && _inspector.TryInspect(hwnd.ToInt64(), out var minimizedWindow)) ParkMinimizedWindow(minimizedWindow);
         var now = NativeMethods.ReadExStyle(hwnd);
         var available = NativeMethods.IsWindowVisible(hwnd) || NativeMethods.IsIconic(hwnd);
         TaskbarButtonProbe.Invalidate();

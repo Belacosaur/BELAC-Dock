@@ -62,9 +62,17 @@ internal static class HostLifecycle
         {
             var first=Fixture(appA,2);var second=Fixture(appB,1);
             StartHost();
+            var minimizedHandle = new IntPtr(second.Window.Hwnd);
+            Belac.Dock.Windows.Native.NativeMethods.PostMessage(minimizedHandle, 0x0112, new IntPtr(0xF020), IntPtr.Zero);
+            Wait(() => IsParked(minimizedHandle), "Full host catches app minimize and removes the legacy desktop caption");
+            Wait(() => Ready(host!.Id), "Minimized windows remain in the dock's tracked app groups");
             host!.Kill();host.WaitForExit();
             StartHost();
             Console.WriteLine("PASS Full host restart recovers persisted Dock-only windows after abrupt termination");
+            Wait(() => IsParked(minimizedHandle), "Dock restart retains minimized off-screen representation");
+            File.WriteAllText(Path.Combine(home,"activate"), second.Window.Hwnd.ToString());
+            Wait(() => !Belac.Dock.Windows.Native.NativeMethods.IsIconic(minimizedHandle), "Dock activation restores the window after restart");
+            Wait(() => Ready(host!.Id), "Restored window remains Dock-only");
             ExitHost();
             TaskbarButtonProbe.Invalidate();
             Wait(()=>TaskbarButtonProbe.LookForWindow(first.Window)==TaskbarProbeResult.Present && TaskbarButtonProbe.LookForWindow(second.Window)==TaskbarProbeResult.Present,"Graceful host exit restores both taskbar groups");
@@ -87,5 +95,10 @@ internal static class HostLifecycle
         var until=DateTime.UtcNow.AddSeconds(35);
         while(DateTime.UtcNow<until){if(condition()){Console.WriteLine("PASS "+label);return;}Thread.Sleep(250);}
         throw new TimeoutException(label);
+    }
+    private static bool IsParked(IntPtr hwnd)
+    {
+        if (!Belac.Dock.Windows.Native.NativeMethods.IsIconic(hwnd) || !Belac.Dock.Windows.Native.NativeMethods.GetWindowRect(hwnd, out var r)) return false;
+        return new MonitorCatalog().GetMonitors().All(m => r.Right <= m.Bounds.Left || r.Left >= m.Bounds.Right || r.Bottom <= m.Bounds.Top || r.Top >= m.Bounds.Bottom);
     }
 }

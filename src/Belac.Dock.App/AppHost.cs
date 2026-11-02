@@ -31,6 +31,14 @@ public sealed class AppHost : IDisposable
         Controller = new WindowController();
         Separation = new TaskbarSeparationService(new JsonRecoveryJournalStore(), Inspector, detail => Logger.LogInformation("Taskbar separation: {Detail}", detail));
         RecoveryPending = Separation.Snapshots.Count > 0;
+        Tracker.MinimizeStateChanged += hwnd =>
+        {
+            try
+            {
+                if (Inspector.TryInspect(hwnd, out var window)) Separation.OnMinimizeStateChanged(window);
+            }
+            catch (Exception ex) { Logger.LogWarning("Minimize handling will retry on refresh: {Error}", ex.GetType().Name); }
+        };
         Appbar = new ShellAppbarService();
         Monitors = new MonitorCatalog();
         Icons = new IconExtractor();

@@ -24,6 +24,7 @@ public sealed class WindowTracker : IWindowTracker
     public long TaskbarHwnd { get; private set; }
     public IReadOnlyList<WindowObservation> Windows { get; private set; } = [];
     public event EventHandler? Changed;
+    public event Action<long>? MinimizeStateChanged;
 
     public void SetManagedPaths(IEnumerable<string> paths)
     {
@@ -89,6 +90,8 @@ public sealed class WindowTracker : IWindowTracker
         if (idObject != 0 && eventType is not (NativeMethods.EventSystemForeground or NativeMethods.EventSystemMinimizeStart or NativeMethods.EventSystemMinimizeEnd))
             return;
 
+        if (eventType is NativeMethods.EventSystemMinimizeStart or NativeMethods.EventSystemMinimizeEnd)
+            MinimizeStateChanged?.Invoke(hwnd.ToInt64());
         _signal.Set();
     }
 

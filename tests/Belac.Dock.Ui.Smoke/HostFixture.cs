@@ -19,6 +19,12 @@ internal static class HostFixture
         {
             var command=Path.Combine(home,"exit");
             if(File.Exists(command)){timer.Stop();host.ShutdownApp();return;}
+            var activate = Path.Combine(home, "activate");
+            if (File.Exists(activate))
+            {
+                if (long.TryParse(File.ReadAllText(activate), out var handle)) host.Controller.TryActivate(handle);
+                File.Delete(activate);
+            }
             var status=new {Pid=Environment.ProcessId,Rows=host.Dock.Rows.OfType<AppItemViewModel>().Select(r=>new{r.AppId,r.WindowCount,r.IsSeparated,r.TaskbarText}).ToArray()};
             var file=Path.Combine(home,"status.json");
             File.WriteAllText(file+".tmp",JsonSerializer.Serialize(status));File.Move(file+".tmp",file,true);
