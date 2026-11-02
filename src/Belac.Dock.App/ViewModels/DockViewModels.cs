@@ -725,6 +725,12 @@ public partial class DockViewModel : ObservableObject
             if (!_items.TryGetValue(app.Id, out var item))
                 continue;
 
+            // Owned windows need no independent taskbar mutation, but Windows can
+            // still leave their minimized caption on the desktop (e.g. WPF apps).
+            if (app.TaskbarMode == TaskbarMode.DockOnly)
+                foreach (var minimized in windows.Where(window => window.IsMinimized))
+                    _host.Separation.ParkMinimizedWindow(minimized, configuredDockOnly: true);
+
             var candidates = windows.Where(window => (!window.HasOwner && !window.IsToolWindow) || window.IsAppWindow
                 || _host.Separation.Snapshots.Any(entry => JournalValidator.IsSameWindow(entry, window))).ToArray();
             var results = _host.Separation.ApplyBatch(app, candidates);
