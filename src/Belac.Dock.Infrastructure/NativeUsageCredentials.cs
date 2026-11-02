@@ -7,6 +7,7 @@ namespace Belac.Dock.Infrastructure;
 public sealed class NativeUsageCredential
 {
     public required string AccessToken { get; init; }
+    public string? RefreshToken { get; init; }
     public string? AccountId { get; init; }
     public string? Plan { get; init; }
     public override string ToString() => "[Protected provider credential]";
@@ -51,14 +52,17 @@ public sealed class NativeUsageCredentials : INativeUsageCredentials
         using var db = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Mode = SqliteOpenMode.ReadOnly, Pooling = false, DefaultTimeout = 2 }.ToString());
         db.Open();
         using var command = db.CreateCommand();
-        command.CommandText = "SELECT key, value FROM ItemTable WHERE key IN ('cursorAuth/accessToken','cursorAuth/stripeMembershipType')";
+        command.CommandText = "SELECT key, value FROM ItemTable WHERE key IN ('cursorAuth/accessToken','cursorAuth/refreshToken','cursorAuth/stripeMembershipType')";
         using var rows = command.ExecuteReader();
-        string? access = null, plan = null;
+        string? access = null, refresh = null, plan = null;
         while (rows.Read())
         {
             if (rows.GetString(0) == "cursorAuth/accessToken") access = rows.GetString(1);
+            else if (rows.GetString(0) == "cursorAuth/refreshToken") refresh = rows.GetString(1);
             else plan = rows.GetString(1);
         }
-        return string.IsNullOrWhiteSpace(access) ? null : new() { AccessToken = access, Plan = plan };
+        access = CursorTokenCodec.Decode(access);
+        refresh = CursorTokenCodec.Decode(refresh);
+        return string.IsNullOrWhiteSpace(access) ? null : new() { AccessToken = access, RefreshToken = refresh, Plan = plan };
     }
 }

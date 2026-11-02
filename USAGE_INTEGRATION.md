@@ -26,11 +26,11 @@ A website login alone is not enough. There is no password, API key or token to p
 
 - Codex: `%USERPROFILE%\.codex\auth.json`, or the directory specified by `CODEX_HOME`. The legacy `.config\codex` directory is also checked. API-key-only, keyring-only and memory-only authentication are not supported yet. Do not weaken credential storage just to connect the dock; use the optional fallback if it supports your setup.
 - Claude Code: `%USERPROFILE%\.claude\.credentials.json`, or the directory specified by `CLAUDE_CONFIG_DIR`.
-- Cursor: `%APPDATA%\Cursor\User\globalStorage\state.vscdb`, opened read-only. Cursor can remain open.
+- Cursor: `%APPDATA%\Cursor\User\globalStorage\state.vscdb`, opened read-only. Cursor can remain open. Encrypted sign-ins are decoded locally using the Cursor Local State file and your Windows account. No manual token copying is needed.
 - Codex in running WSL distributions is detected as a separate **Codex · WSL (distribution)** entry. Leave **Include Codex in running WSL distributions** enabled in setup. The default WSL user’s `.codex/auth.json` or `.config/codex/auth.json` is read; `CODEX_HOME` is honored when available to the non-login WSL process. Custom shell-only environment settings, keyring-only WSL sessions, additional users, WSL Claude and custom Cursor profiles are not detected.
 - The dock queries running distributions only and excludes Docker’s internal distributions. It does not intentionally start stopped distributions. A previously fetched WSL reading stays marked stale while its distribution is unavailable.
 
-The dock never modifies these files or rotates refresh tokens. If a session expires, open the provider app to renew the sign-in. The next check reads updated credentials automatically.
+The dock never modifies these files. Cursor usage automatically attempts access-token renewal after an authentication failure. Renewed credentials stay in dock memory. For Cursor, choose **Reconnect Cursor** on the wizard’s connection-check page to retry immediately; if a fresh login is required, it opens Cursor and explains what to do. Sign in inside Cursor and return to **Check again**. Codex and Claude session renewal remains in their provider apps. Updated local credentials are detected automatically.
 
 ## Refresh and status
 

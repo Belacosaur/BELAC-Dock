@@ -12,6 +12,7 @@ public sealed class NativeUsageSource : IUsageProviderSource, IDisposable
 {
     private readonly HttpClient _http;
     private readonly IWslCodexCredentials _wsl;
+    private (string Fingerprint, NativeUsageCredential Credential)? _cursorSession;
     private readonly Dictionary<string, string> _wslNames = new();
     private readonly INativeUsageCredentials _credentials;
     private readonly Func<UsageSettings> _settings;
@@ -91,7 +92,8 @@ public sealed class NativeUsageSource : IUsageProviderSource, IDisposable
             _cache.Remove(cacheKey);
             return Failure(accountKey is not null ? "Sign in to Codex inside this WSL distribution, then check again." : id == "claude" ? "Sign in to Claude Code on Windows, then check again." : $"Sign in to {NativeUsageParser.Name(id)} on Windows, then check again. A website login alone is not enough.");
         }
-        var fingerprint = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(credential.AccessToken + "\n" + credential.AccountId)));
+        var fingerprint = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(credential.AccessToken + "\n" + credential.AccountId + "\n" + credential.RefreshToken)));
+        if (id == "cursor" && _cursorSession is { } session && session.Fingerprint == fingerprint) credential = session.Credential;
         var hasPrevious = _cache.TryGetValue(cacheKey, out var previous) && previous.Fingerprint == fingerprint;
         if (hasPrevious && now < previous.Next) return previous.Reading;
         var next = now.AddMinutes(id == "claude" ? 5 : 2);
@@ -112,7 +114,9 @@ public sealed class NativeUsageSource : IUsageProviderSource, IDisposable
             if (id == "cursor") { request.Content = new StringContent("{}", Encoding.UTF8, "application/json"); request.Headers.Add("Connect-Protocol-Version", "1"); }
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
             timeout.CancelAfter(TimeSpan.FromSeconds(12));
-            using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token).ConfigureAwait(false);
+            using var response = id == "cursor"
+                ? await SendCursorAsync(request, credential, fingerprint, timeout.Token).ConfigureAwait(false)
+                : await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token).ConfigureAwait(false);
             if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
                 result = Failure($"Sign-in expired or usage access was denied. Open {NativeUsageParser.Name(id)}{(id == "claude" ? " Code" : "")}, sign in again, then check here.");
             else if ((int)response.StatusCode == 429)
@@ -146,6 +150,70 @@ public sealed class NativeUsageSource : IUsageProviderSource, IDisposable
             result = previous.Reading with { IsStale = true, Error = result.Error };
         _cache[cacheKey] = (fingerprint, result, next);
         return result;
+    }
+    public async Task<ProviderUsage> ReconnectCursorAsync(CancellationToken token)
+    {
+        await _gate.WaitAsync(token).ConfigureAwait(false);
+        try
+        {
+            // A manual reconnect must not bypass a provider's Retry-After gate.
+            if (_cache.TryGetValue("cursor", out var cached) && cached.Next > _clock()
+                && cached.Reading.Error?.StartsWith("Provider rate limit", StringComparison.Ordinal) == true) return cached.Reading;
+            _cache.Remove("cursor");
+            return await FetchAsync("cursor", token).ConfigureAwait(false);
+        }
+        finally { _gate.Release(); }
+    }
+
+    private async Task<HttpResponseMessage> SendCursorAsync(HttpRequestMessage request, NativeUsageCredential credential, string fingerprint, CancellationToken token)
+    {
+        var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, token).ConfigureAwait(false);
+        if (response.StatusCode != HttpStatusCode.Unauthorized || string.IsNullOrWhiteSpace(credential.RefreshToken)) return response;
+        // Cursor's own source store remains read-only. Renewed credentials live only in
+        // this process and are discarded when the source account/token changes.
+        using var renew = new HttpRequestMessage(HttpMethod.Post, "https://api2.cursor.sh/oauth/token")
+        {
+            Content = new StringContent(JsonSerializer.Serialize(new { grant_type = "refresh_token", client_id = "KbZUR41cY7W6zRSdpSUJ7I7mLYBKOCmB", refresh_token = credential.RefreshToken }), Encoding.UTF8, "application/json")
+        };
+        HttpResponseMessage renewed;
+        try { renewed = await _http.SendAsync(renew, HttpCompletionOption.ResponseHeadersRead, token).ConfigureAwait(false); }
+        catch { response.Dispose(); throw; }
+        using (renewed)
+        {
+            if ((int)renewed.StatusCode == 429)
+            {
+                response.Dispose();
+                var limited = new HttpResponseMessage((HttpStatusCode)429);
+                limited.Headers.RetryAfter = renewed.Headers.RetryAfter;
+                return limited;
+            }
+            if (!renewed.IsSuccessStatusCode) return response;
+            try
+            {
+                await using var stream = await renewed.Content.ReadAsStreamAsync(token).ConfigureAwait(false);
+                using var data = new MemoryStream();
+                var buffer = new byte[4096];
+                int count;
+                while ((count = await stream.ReadAsync(buffer, token).ConfigureAwait(false)) > 0)
+                {
+                    if (data.Length + count > 65536) throw new InvalidDataException();
+                    data.Write(buffer, 0, count);
+                }
+                using var json = JsonDocument.Parse(data.ToArray());
+                var access = NativeUsageParser.Text(json.RootElement, "access_token");
+                if (NativeUsageParser.Child(json.RootElement, "shouldLogout").ValueKind == JsonValueKind.True || string.IsNullOrWhiteSpace(access)) return response;
+                var updated = new NativeUsageCredential { AccessToken = access, RefreshToken = NativeUsageParser.Text(json.RootElement, "refresh_token") ?? credential.RefreshToken, Plan = credential.Plan };
+                using var retry = new HttpRequestMessage(HttpMethod.Post, "https://api2.cursor.sh/aiserver.v1.DashboardService/GetCurrentPeriodUsage");
+                retry.Headers.Authorization = new AuthenticationHeaderValue("Bearer", updated.AccessToken);
+                retry.Headers.Add("Connect-Protocol-Version", "1");
+                retry.Content = new StringContent("{}", Encoding.UTF8, "application/json");
+                var result = await _http.SendAsync(retry, HttpCompletionOption.ResponseHeadersRead, token).ConfigureAwait(false);
+                _cursorSession = (fingerprint, updated);
+                response.Dispose();
+                return result;
+            }
+            catch { response.Dispose(); throw; }
+        }
     }
     public void Dispose() { _http.Dispose(); if (_ownsFallback && _fallback is IDisposable d) d.Dispose(); }
 }

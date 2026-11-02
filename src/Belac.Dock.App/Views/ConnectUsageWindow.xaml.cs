@@ -38,6 +38,9 @@ public partial class ConnectUsageWindow : Window
         CheckStep.Visibility = _step == 2 ? Visibility.Visible : Visibility.Collapsed;
         BackButton.Visibility = _step == 0 ? Visibility.Collapsed : Visibility.Visible;
         BackButton.IsEnabled = !_checking;
+        ReconnectCursorButton.Visibility = CursorBox.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        CursorReconnectHelp.Visibility = ReconnectCursorButton.Visibility;
+        ReconnectCursorButton.IsEnabled = !_checking;
         NextButton.Content = _step == 2 ? "Show readings on dock" : "Next";
         NextButton.IsEnabled = _step != 2 || (!_checking && _snapshot is not null && UsageSetupStatus.From(_snapshot, true, true).CanFinish);
     }
@@ -78,10 +81,13 @@ public partial class ConnectUsageWindow : Window
         catch (Exception) { ActionError.Text = "Could not save your choices. Check that the settings folder is writable."; }
     }
     private async void Check_Click(object sender, RoutedEventArgs e) => await CheckAsync();
-    private async Task CheckAsync()
+    private async void ReconnectCursor_Click(object sender, RoutedEventArgs e) => await CheckAsync(reconnectCursor: true);
+    private async Task CheckAsync(bool reconnectCursor = false)
     {
         if (_checking) return;
         _checking = true;
+        ReconnectCursorButton.IsEnabled = false;
+        ActionError.Text = "";
         BackButton.IsEnabled = false;
         CheckButton.IsEnabled = false;
         NextButton.IsEnabled = false;
@@ -90,6 +96,18 @@ public partial class ConnectUsageWindow : Window
         Readings.ItemsSource = null;
         try
         {
+            if (reconnectCursor && _source is NativeUsageSource reconnectSource)
+            {
+                var cursor = await reconnectSource.ReconnectCursorAsync(_closed.Token);
+                if (_closed.IsCancellationRequested) return;
+                if (cursor.Error?.StartsWith("Sign-in expired", StringComparison.Ordinal) == true)
+                {
+                    OpenCursorForSignIn();
+                    ActionError.Text = "Cursor requires a fresh login. Sign in inside Cursor (sign out and back in if it still shows you as signed in), then choose Check again here.";
+                }
+                else if (cursor.Error is not null) ActionError.Text = cursor.Error;
+                else ActionError.Text = "Cursor reconnected. Its usage reading is available below.";
+            }
             var snapshot = _source is NativeUsageSource native ? await native.GetSnapshotAsync(_closed.Token, _selection) : await _source.GetSnapshotAsync(_closed.Token);
             if (_closed.IsCancellationRequested) return;
             _snapshot = snapshot;
@@ -109,6 +127,12 @@ public partial class ConnectUsageWindow : Window
             _checking = false;
             if (!_closed.IsCancellationRequested) { CheckButton.IsEnabled = true; ShowStep(); }
         }
+    }
+    private void OpenCursorForSignIn()
+    {
+        var executable = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Programs", "cursor", "Cursor.exe");
+        if (File.Exists(executable)) Process.Start(new ProcessStartInfo(executable) { UseShellExecute = true });
+        else Browse("https://cursor.com/downloads");
     }
     private void Browse(string url)
     {

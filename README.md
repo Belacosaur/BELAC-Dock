@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <strong><a href="https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.2.3/BELAC.Dock-v1.2.3-win-x64.zip">Download for Windows 11 x64</a></strong>
+  <strong><a href="https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.2.4/BELAC.Dock-v1.2.4-win-x64.zip">Download for Windows 11 x64</a></strong>
   · <a href="#quick-start">Quick start</a>
   · <a href="#screenshots">Screenshots</a>
   · <a href="https://github.com/Belacosaur/BELAC-Dock/releases/latest">Release notes</a>
@@ -20,7 +20,7 @@
 
 ## Quick start
 
-1. **[Download the Windows ZIP](https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.2.3/BELAC.Dock-v1.2.3-win-x64.zip)** and extract the entire folder.
+1. **[Download the Windows ZIP](https://github.com/Belacosaur/BELAC-Dock/releases/download/v1.2.4/BELAC.Dock-v1.2.4-win-x64.zip)** and extract the entire folder.
 2. Run **BELAC.Dock.exe** and choose your apps.
 3. Drag the top handle to position your dock. Pick a colour in **Settings → Appearance**.
 

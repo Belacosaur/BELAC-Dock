@@ -99,6 +99,56 @@ public class NativeUsageTests
     }
     private static HttpResponseMessage Json(string body) => new(HttpStatusCode.OK) { Content = new StringContent(body) };
     [Fact]
+    public async Task Cursor_renews_once_after_401_and_reconnect_reuses_the_renewed_session()
+    {
+        var credentials = new Credentials { Value = new() { AccessToken = "old", RefreshToken = "refresh-fixture" } };
+        using var handler = new Handler(request =>
+        {
+            if (request.RequestUri!.AbsolutePath == "/oauth/token")
+            {
+                Assert.Null(request.Headers.Authorization);
+                return Json("{\"access_token\":\"renewed\",\"shouldLogout\":false}");
+            }
+            return request.Headers.Authorization!.Parameter == "renewed"
+                ? Json("{\"planUsage\":{\"totalPercentUsed\":35}}") : new(HttpStatusCode.Unauthorized);
+        });
+        using var source = new NativeUsageSource(() => new() { NativeProviders = ["cursor"] }, credentials, handler);
+        var first = await source.GetSnapshotAsync(default);
+        Assert.Null(first.Providers[0].Error);
+        Assert.Equal(3, handler.Calls);
+        Assert.Null((await source.ReconnectCursorAsync(default)).Error);
+        Assert.Equal(4, handler.Calls);
+        Assert.Equal("old", credentials.Value.AccessToken); // source credentials were never overwritten
+        credentials.Value = new() { AccessToken = "another-account" };
+        Assert.NotNull((await source.GetSnapshotAsync(default)).Providers[0].Error);
+        Assert.Equal(5, handler.Calls);
+    }
+    [Fact]
+    public async Task Cursor_requires_fresh_login_when_provider_rejects_renewal()
+    {
+        using var handler = new Handler(request => request.RequestUri!.AbsolutePath == "/oauth/token"
+            ? Json("{\"shouldLogout\":true,\"access_token\":\"\"}") : new(HttpStatusCode.Unauthorized));
+        using var source = new NativeUsageSource(() => new() { NativeProviders = ["cursor"] }, new Credentials { Value = new() { AccessToken = "old", RefreshToken = "refresh" } }, handler);
+        var result = await source.ReconnectCursorAsync(default);
+        Assert.Contains("Sign-in expired", result.Error);
+        Assert.Equal(2, handler.Calls);
+    }
+    [Fact]
+    public async Task Cursor_reconnect_respects_renewal_rate_limit()
+    {
+        using var handler = new Handler(request =>
+        {
+            if (request.RequestUri!.AbsolutePath != "/oauth/token") return new(HttpStatusCode.Unauthorized);
+            var limited = new HttpResponseMessage((HttpStatusCode)429);
+            limited.Headers.RetryAfter = new(TimeSpan.FromMinutes(40));
+            return limited;
+        });
+        using var source = new NativeUsageSource(() => new() { NativeProviders = ["cursor"] }, new Credentials { Value = new() { AccessToken = "old", RefreshToken = "refresh" } }, handler);
+        Assert.Contains("rate limit", (await source.ReconnectCursorAsync(default)).Error);
+        Assert.Contains("rate limit", (await source.ReconnectCursorAsync(default)).Error);
+        Assert.Equal(2, handler.Calls);
+    }
+    [Fact]
     public async Task Wsl_and_windows_accounts_have_separate_ids_and_caches()
     {
         using var handler = new Handler(_ => Json(Codex));

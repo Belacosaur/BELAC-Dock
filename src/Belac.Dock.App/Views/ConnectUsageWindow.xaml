@@ -50,6 +50,8 @@
      <TextBlock x:Name="ConnectionTitle" FontSize="16" FontWeight="SemiBold" Margin="0,16,0,8" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/>
      <TextBlock x:Name="ConnectionDetail" Style="{StaticResource BodyText}"/>
      <Button x:Name="CheckButton" Style="{StaticResource TextButton}" Content="Check again" Click="Check_Click" HorizontalAlignment="Left" Margin="0,12,0,12"/>
+     <Button x:Name="ReconnectCursorButton" Style="{StaticResource TextButton}" Content="Reconnect Cursor" Click="ReconnectCursor_Click" HorizontalAlignment="Left" Margin="0,0,0,12"/>
+     <TextBlock x:Name="CursorReconnectHelp" Style="{StaticResource MutedText}" Margin="0,0,0,12" Text="Reconnect attempts to renew your Cursor session. If Cursor requires a new login, it opens the app. Sign in there, then choose Check again."/>
      <ItemsControl x:Name="Readings"><ItemsControl.ItemTemplate><DataTemplate>
       <Border Style="{StaticResource WorkspaceCard}" Padding="12" Margin="0,0,0,8"><StackPanel>
        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap"/>
