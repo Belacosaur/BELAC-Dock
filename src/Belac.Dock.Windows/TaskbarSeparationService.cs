@@ -110,6 +110,7 @@ public sealed class TaskbarSeparationService : ITaskbarSeparationService, IDispo
             return Fail(window, "The window is not visible, so it was left unchanged.");
 
         var key = Identity(live);
+        if (live.IsMinimized) ParkMinimizedWindow(live, configuredDockOnly: true);
         var now = DateTime.UtcNow;
         if (_failures.GetValueOrDefault(key) >= 2)
             return Finish(TaskbarStatus.Unsupported, "Dock-only failed twice: " + _failureDetails.GetValueOrDefault(key, "Windows rejected the change.") + " Switch to Mirror, then Dock only to retry.", false);
@@ -196,9 +197,11 @@ public sealed class TaskbarSeparationService : ITaskbarSeparationService, IDispo
     // Windows normally parks taskbar-managed minimized windows outside the desktop.
     // DeleteTab / TOOLWINDOW can leave a legacy caption at the bottom left instead.
     // Move only that iconic representation; do not hide the HWND or change its restore bounds.
-    public void ParkMinimizedWindow(WindowObservation window)
+    public void ParkMinimizedWindow(WindowObservation window, bool configuredDockOnly = false)
     {
-        if (IsPaused || !_entries.Any(entry => JournalValidator.IsSameWindow(entry, window))) return;
+        // Parking changes no window style or restore geometry, so it is safe even
+        // when a pre-existing minimized window has no identifiable taskbar button.
+        if (IsPaused || (!configuredDockOnly && !_entries.Any(entry => JournalValidator.IsSameWindow(entry, window)))) return;
         var hwnd = new IntPtr(window.Hwnd);
         if (!NativeMethods.IsIconic(hwnd) || !_inspector.TryInspect(window.Hwnd, out var live)
             || !JournalValidator.IsSameWindow(ToSnapshot(window, 0, "Check"), live)) return;
@@ -212,11 +215,12 @@ public sealed class TaskbarSeparationService : ITaskbarSeparationService, IDispo
                 NativeMethods.SwpNoSize | NativeMethods.SwpNoZOrder | NativeMethods.SwpNoActivate);
     }
 
-    public void OnMinimizeStateChanged(WindowObservation window)
+    public void OnMinimizeStateChanged(WindowObservation window, DockApp? app = null)
     {
-        if (IsPaused || !_entries.Any(entry => JournalValidator.IsSameWindow(entry, window))) return;
-        if (window.IsMinimized) ParkMinimizedWindow(window);
-        else
+        var managed = _entries.Any(entry => JournalValidator.IsSameWindow(entry, window));
+        if (IsPaused || (!managed && app?.TaskbarMode != TaskbarMode.DockOnly)) return;
+        if (window.IsMinimized) ParkMinimizedWindow(window, app?.TaskbarMode == TaskbarMode.DockOnly);
+        else if (managed)
         {
             // Restoring can cause Explorer to recreate the taskbar button.
             TryDeleteTab(new IntPtr(window.Hwnd));

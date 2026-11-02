@@ -108,6 +108,15 @@ internal static class Lifecycle
             var second=Start(b.DisplayName,"default",1);
             Check(first.Windows.All(w=>w.Aumid?.StartsWith("BELAC.Test.")==true), "Reads per-window app identity");
             Wait(()=>Probe(first.Windows[0])==TaskbarProbeResult.Present && Probe(second.Windows[0])==TaskbarProbeResult.Present,"Both app groups visible before hiding");
+            var initialMinimized = new IntPtr(first.Windows[0].Hwnd);
+            new WindowController().TryMinimize(first.Windows[0].Hwnd);
+            Wait(() => NativeMethods.IsIconic(initialMinimized), "Pre-existing window minimized before separation");
+            NativeMethods.SetWindowPos(initialMinimized, IntPtr.Zero, 40, 40, 0, 0, NativeMethods.SwpNoSize | NativeMethods.SwpNoZOrder | NativeMethods.SwpNoActivate);
+            service.ParkMinimizedWindow(first.Windows[0], configuredDockOnly: true);
+            NativeMethods.GetWindowRect(initialMinimized, out var parkedBeforeSeparation);
+            Check(parkedBeforeSeparation.Right < 0 && service.Snapshots.Count == 0, "Already-minimized Dock-only window is parked without requiring a taskbar recovery record");
+            new WindowController().TryActivate(first.Windows[0].Hwnd);
+            Wait(() => !NativeMethods.IsIconic(initialMinimized), "Pre-existing minimized window restores normally");
             HideAll((a,first.Windows));
             Check(Probe(first.Windows[0])==TaskbarProbeResult.Absent && Probe(second.Windows[0])==TaskbarProbeResult.Present,"Explicit app group is independent from same-executable default group");
             HideAll((a,first.Windows),(b,second.Windows));

@@ -35,7 +35,8 @@ public sealed class AppHost : IDisposable
         {
             try
             {
-                if (Inspector.TryInspect(hwnd, out var window)) Separation.OnMinimizeStateChanged(window);
+                if (Inspector.TryInspect(hwnd, out var window))
+                    Separation.OnMinimizeStateChanged(window, Belac.Dock.Core.Matching.AppMatcher.Match(Session.Current.Apps, window).App);
             }
             catch (Exception ex) { Logger.LogWarning("Minimize handling will retry on refresh: {Error}", ex.GetType().Name); }
         };
