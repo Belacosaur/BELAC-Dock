@@ -54,7 +54,10 @@ public sealed class AppHost : IDisposable
         Tracker.SetManagedPaths(Session.Current.Apps.Select(app => app.ExePath));
         Session.Changed += (_, _) => Tracker.SetManagedPaths(Session.Current.Apps.Select(app => app.ExePath));
         if (syncStartup && !string.IsNullOrWhiteSpace(Environment.ProcessPath))
-            Startup.SetEnabled(Session.Current.Autostart, Environment.ProcessPath);
+        {
+            try { Startup.SetEnabled(Session.Current.Autostart, Environment.ProcessPath); }
+            catch (Exception ex) { Logger.LogWarning("Could not synchronize Windows startup: {Error}", ex.GetType().Name); }
+        }
         Dock = new DockViewModel(this);
         Tracker.Start();
         if (Session.Current.Usage.Enabled)

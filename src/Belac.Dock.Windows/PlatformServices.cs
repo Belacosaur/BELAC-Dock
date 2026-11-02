@@ -102,15 +102,21 @@ public sealed class ShortcutResolver : IShortcutResolver
 
 public sealed class StartupRegistration : IStartupRegistration
 {
-    private const string ValueName = "BELAC Dock";
+    private readonly string ValueName;
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
+    private readonly string StartupShortcut;
+    public StartupRegistration(string registrationName = "BELAC Dock", string? startupDirectory = null)
+    {
+        ValueName = registrationName;
+        StartupShortcut = Path.Combine(startupDirectory ?? Environment.GetFolderPath(Environment.SpecialFolder.Startup), registrationName + ".lnk");
+    }
 
     public bool IsRegistered
     {
         get
         {
             using var key = Registry.CurrentUser.OpenSubKey(RunKey, writable: false);
-            return key?.GetValue(ValueName) is string;
+            return key?.GetValue(ValueName) is string || File.Exists(StartupShortcut);
         }
     }
 
@@ -120,10 +126,29 @@ public sealed class StartupRegistration : IStartupRegistration
         if (!enabled)
         {
             key.DeleteValue(ValueName, throwOnMissingValue: false);
+            if (File.Exists(StartupShortcut)) File.Delete(StartupShortcut);
             return;
         }
 
         key.SetValue(ValueName, "\"" + executablePath + "\"");
+        // Some shell sessions skip Run entries. A per-user Startup shortcut provides
+        // a second supported launch route; SingleInstanceManager prevents duplicates.
+        IShellLinkW? link = null;
+        try
+        {
+            var type = Type.GetTypeFromCLSID(new Guid("00021401-0000-0000-C000-000000000046"));
+            link = (IShellLinkW?)Activator.CreateInstance(type!);
+            if (link is null) throw new IOException("Could not create the startup shortcut.");
+            Directory.CreateDirectory(Path.GetDirectoryName(StartupShortcut)!);
+            link.SetPath(executablePath);
+            link.SetWorkingDirectory(Path.GetDirectoryName(executablePath)!);
+            link.SetDescription("Start BELAC Dock when you sign in to Windows");
+            ((IPersistFile)link).Save(StartupShortcut, true);
+        }
+        finally
+        {
+            if (link is not null && Marshal.IsComObject(link)) Marshal.ReleaseComObject(link);
+        }
     }
 }
 
